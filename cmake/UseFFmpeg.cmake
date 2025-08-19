@@ -5,15 +5,16 @@
 OPTION(WITH_FFMPEG "Build with FFmpeg support?" OFF)
 
 IF(WITH_FFMPEG)
-  FIND_PACKAGE(FFmpeg QUIET)
-  IF(${FFMPEG_FOUND})
-    INCLUDE_DIRECTORIES(${FFMPEG_INCLUDE_DIR})
-    ADD_DEFINITIONS(-DCOMPILE_WITH_FFMPEG)
+  pkg_check_modules(libavcodec_illixr REQUIRED libavcodec_illixr)
+  pkg_check_modules(libavdevice_illixr REQUIRED libavdevice_illixr)
+  pkg_check_modules(libavformat_illixr REQUIRED libavformat_illixr)
+  pkg_check_modules(libavutil_illixr REQUIRED libavutil_illixr)
+  pkg_check_modules(libswscale_illixr REQUIRED libswscale_illixr)
 
-    IF(MSVC_IDE)
-      FIND_PATH(FFmpeg_SHARED_ROOT ff-prompt.bat HINTS $ENV{HOMEPATH}/Downloads/ffmpeg-20160310-git-689211d-win64-shared)
-    ENDIF()
-  ELSE()
-    MESSAGE(FATAL_ERROR "FFmpeg not found!")
-  ENDIF()
+  set(FFMPEG_LIBRARIES "${libavcodec_illixr_LIBRARIES};${libavdevice_illixr_LIBRARIES};${libavformat_illixr_LIBRARIES};${libavutil_illixr_LIBRARIES};${libswscale_illixr_LIBRARIES}")
+  set(FFMPEG_INCLUDE_DIRS "${libavcodec_illixr_INCLUDE_DIRS}")
+
+  INCLUDE_DIRECTORIES(${FFMPEG_INCLUDE_DIRS})
+  ADD_DEFINITIONS(-DCOMPILE_WITH_FFMPEG)
+
 ENDIF()
