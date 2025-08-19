@@ -1,0 +1,159 @@
+// Copyright 2014-2017 Oxford University Innovation Limited and the authors of InfiniTAM
+
+#include "ITMMeshingEngine_CUDA.h"
+
+#include <algorithm>
+#include <chrono>
+
+#include "../Shared/ITMMeshingEngine_Shared.h"
+#include "../../../Utils/ITMCUDAUtils.h"
+#include "../../../../ORUtils/CUDADefines.h"
+#include <thrust/sort.h>
+#include <thrust/unique.h>
+#include <thrust/device_vector.h>
+
+using namespace ITMLib;
+
+template<class TVoxel>
+__global__ void meshScene_device(ITMMesh::Triangle *triangles, unsigned int *noTriangles_device, float factor, int noTotalEntries,
+	int noMaxTriangles, const Vector4s *visibleBlockGlobalPos, const TVoxel *localVBA, const ITMHashEntry *hashTable, Vector4s* buffer);
+
+//pyh used for tracking counter
+__device__ int updateCounter;
+
+template<int dummy>
+//pyh add mechanism to choose between generate active and inactive mesh regions
+__global__ void findAllocateBlocks(Vector4s *visibleBlockGlobalPos, const ITMHashEntry *hashTable, int noTotalEntries, int mesh_type)
+{
+	int entryId = threadIdx.x + blockIdx.x * blockDim.x;
+	if (entryId > noTotalEntries - 1) return;
+
+	const ITMHashEntry &currentHashEntry = hashTable[entryId];
+
+	if(currentHashEntry.ptr >= 0 && currentHashEntry.init){
+		//pyh marching on all region
+		if(mesh_type==2){
+			int idx = atomicAdd(&updateCounter, 1);
+			visibleBlockGlobalPos[idx] = Vector4s(currentHashEntry.pos.x, currentHashEntry.pos.y, currentHashEntry.pos.z, 1);
+		}
+
+		//pyh marching on active region
+		else if(mesh_type ==1 && currentHashEntry.fused_counter > 0){
+			int idx = atomicAdd(&updateCounter, 1);
+			visibleBlockGlobalPos[idx] = Vector4s(currentHashEntry.pos.x, currentHashEntry.pos.y, currentHashEntry.pos.z, 1);
+		}
+	}
+}
+
+template<class TVoxel>
+ITMMeshingEngine_CUDA<TVoxel,ITMVoxelBlockHash>::ITMMeshingEngine_CUDA(void) 
+{
+	ORcudaSafeCall(cudaMalloc((void**)&visibleBlockGlobalPos_device, SDF_LOCAL_BLOCK_NUM * sizeof(Vector4s)));
+	ORcudaSafeCall(cudaMalloc((void**)&noTriangles_device, sizeof(unsigned int)));
+}
+
+template<class TVoxel>
+ITMMeshingEngine_CUDA<TVoxel,ITMVoxelBlockHash>::~ITMMeshingEngine_CUDA(void) 
+{
+	ORcudaSafeCall(cudaFree(visibleBlockGlobalPos_device));
+	ORcudaSafeCall(cudaFree(noTriangles_device));
+}
+
+template<class TVoxel>
+//pyh add mechanism to choose between generate active and inactive mesh regions
+void ITMMeshingEngine_CUDA<TVoxel, ITMVoxelBlockHash>::MeshScene(ITMMesh *mesh, const ITMScene<TVoxel, ITMVoxelBlockHash> *scene, int mesh_type)
+{
+	const TVoxel *localVBA = scene->localVBA.GetVoxelBlocks();
+	const ITMHashEntry *hashTable = scene->index.GetEntries();
+
+	int noTotalEntries = scene->index.noTotalEntries;
+	float factor = scene->sceneParams->voxelSize * 100.f;
+	ORcudaSafeCall(cudaMemset(noTriangles_device, 0, sizeof(unsigned int)));
+	ORcudaSafeCall(cudaMemset(visibleBlockGlobalPos_device, 0, sizeof(Vector4s) * SDF_LOCAL_BLOCK_NUM));
+
+	int counter = 0;
+	ORcudaSafeCall(cudaMemcpyToSymbol(updateCounter, &counter, sizeof(int)));
+	
+	{ 	// identify used voxel blocks
+		dim3 cudaBlockSize(256); 
+		dim3 gridSize((int)ceil((float)noTotalEntries / (float)cudaBlockSize.x));
+
+		//pyh add mechanism to choose between generate active and inactive mesh regions
+		findAllocateBlocks<-1><<<gridSize, cudaBlockSize>>>(visibleBlockGlobalPos_device, hashTable, noTotalEntries, mesh_type);
+		ORcudaKernelCheck;
+		
+		ORcudaSafeCall(cudaMemcpyFromSymbol(&counter, updateCounter, sizeof(int)));
+		mesh->noVoxelBlocks = counter;
+
+                Vector4s* visibleBlockGlobalPos_host = (Vector4s*)malloc(sizeof(Vector4s) * counter);
+                ORcudaSafeCall(cudaMemcpy(visibleBlockGlobalPos_host, visibleBlockGlobalPos_device, sizeof(Vector4s) * counter, cudaMemcpyDeviceToHost));
+		//creating the UVBL list
+                mesh->updated_voxel_blocks.resize(counter);
+                for(int i = 0; i < counter; i++){
+                        mesh->updated_voxel_blocks[i][0] = visibleBlockGlobalPos_host[i].x;
+                        mesh->updated_voxel_blocks[i][1] = visibleBlockGlobalPos_host[i].y;
+                        mesh->updated_voxel_blocks[i][2] = visibleBlockGlobalPos_host[i].z;
+                }
+	}
+
+	{ 
+		dim3 cudaBlockSize(SDF_BLOCK_SIZE, SDF_BLOCK_SIZE, SDF_BLOCK_SIZE);
+                dim3 gridSize((counter + 15) / 16, 16);  // Use ceiling division to handle cases where counter < 16
+
+		//pyh this can be changed if to larger number if necessary
+                unsigned estimated_faces = counter * 100;
+		mesh->triangles = new ORUtils::MemoryBlock<ITMMesh::Triangle>(estimated_faces, mesh->memoryType);
+		int noMaxTriangles = estimated_faces;
+		ITMMesh::Triangle *triangles = mesh->triangles->GetData(MEMORYDEVICE_CUDA);
+
+		meshScene_device<TVoxel> << <gridSize, cudaBlockSize >> >(triangles, noTriangles_device, factor, noTotalEntries, noMaxTriangles,
+			visibleBlockGlobalPos_device, localVBA, hashTable);
+		ORcudaKernelCheck;
+
+		ORcudaSafeCall(cudaMemcpy(&mesh->noTotalTriangles, noTriangles_device, sizeof(unsigned int), cudaMemcpyDeviceToHost));
+	}
+}
+
+template<class TVoxel>
+ITMMeshingEngine_CUDA<TVoxel,ITMPlainVoxelArray>::ITMMeshingEngine_CUDA(void) 
+{}
+
+template<class TVoxel>
+ITMMeshingEngine_CUDA<TVoxel,ITMPlainVoxelArray>::~ITMMeshingEngine_CUDA(void) 
+{}
+
+template<class TVoxel>
+void ITMMeshingEngine_CUDA<TVoxel, ITMPlainVoxelArray>::MeshScene(ITMMesh *mesh, const ITMScene<TVoxel, ITMPlainVoxelArray> *scene)
+{}
+
+template<class TVoxel>
+__global__ void meshScene_device(ITMMesh::Triangle *triangles, unsigned int *noTriangles_device, float factor, int noTotalEntries, 
+	int noMaxTriangles, const Vector4s *visibleBlockGlobalPos, const TVoxel *localVBA, const ITMHashEntry *hashTable)
+{
+	const Vector4s globalPos_4s = visibleBlockGlobalPos[blockIdx.x + gridDim.x * blockIdx.y];
+
+	Vector3i globalPos = Vector3i(globalPos_4s.x, globalPos_4s.y, globalPos_4s.z) * SDF_BLOCK_SIZE;
+
+	Vector3f vertList[12];
+	Vector3f colorList[12];
+	int cubeIndex = buildVertList(vertList, colorList, globalPos, Vector3i(threadIdx.x, threadIdx.y, threadIdx.z), localVBA, hashTable);
+
+	if (cubeIndex < 0) {
+		return;
+	}
+
+	for (int i = 0; triangleTable[cubeIndex][i] != -1; i += 3)
+	{
+		int triangleId = atomicAdd(noTriangles_device, 1);
+
+		if (triangleId < noMaxTriangles - 1)
+		{
+			triangles[triangleId].p0 = vertList[triangleTable[cubeIndex][i]] * factor;
+			triangles[triangleId].p1 = vertList[triangleTable[cubeIndex][i + 1]] * factor;
+			triangles[triangleId].p2 = vertList[triangleTable[cubeIndex][i + 2]] * factor;
+
+			//get the vb_info
+			triangles[triangleId].vb_info = Vector3i(globalPos_4s.x, globalPos_4s.y, globalPos_4s.z);
+		}
+	}
+}
