@@ -22,7 +22,7 @@
 #include <iostream>
 #include <algorithm>
 #include <memory>
-
+#include <spdlog/spdlog.h>
 #include <draco/io/ply_reader.h>
 #include "draco/io/ply_property_writer.h"
 #include "draco/io/ply_decoder.h"
@@ -82,13 +82,13 @@ class infinitam : public plugin {
             const std::string calib_subpath = "/calibration.txt";
             std::string calib_source{illixr_data + calib_subpath};
             if(!readRGBDCalib(calib_source.c_str(), *calib)){
-                std::cout<<"Read RGBD caliberation file failed\n";
+        spdlog::get("illixr")->error("Read RGBD calibration file failed");
             }
             
             //pyh extract scene name
             std::size_t pos = illixr_data.find_last_of("/");
             scene_number = illixr_data.substr(pos+1);
-            //std::cout<<"Scene number: "<<scene_number<<std::endl;
+    //spdlog::get("illixr")->debug("Scene number: {}", scene_number);
             
             mainEngine = new ITMLib::ITMBasicEngine<ITMVoxel, ITMVoxelIndex>(
                     internalSettings,
@@ -102,7 +102,7 @@ class infinitam : public plugin {
             inputRGBImage = new ITMUChar4Image(calib->intrinsics_rgb.imgSize, true, false);
             
             if (internalSettings->deviceType == ITMLib::ITMLibSettings::DEVICE_CUDA){
-                std::cout<<"Using the CUDA version of InfiniTAM\n";
+        spdlog::get("illixr")->info("Using the CUDA version of InfiniTAM");
             }
             
             sb->schedule<scene_recon_type>(id,"ScanNet_Data",[&](switchboard::ptr<const scene_recon_type> datum, std::size_t){
@@ -117,7 +117,7 @@ class infinitam : public plugin {
 
 	    if (!std::filesystem::exists(data_path)) {
 		    if (!std::filesystem::create_directory(data_path)) {
-			    std::cerr << "Failed to create data directory.";
+            spdlog::get("illixr")->error("Failed to create data directory.");
 		    }
 	    }
             sr_latency.open(data_path + "/sr_latency.csv");
@@ -129,23 +129,25 @@ class infinitam : public plugin {
 		    try { THREAD_COUNT = std::stoul(env_threads); }
 		    catch (...) { std::cerr << "infinitam: COMPRESSION_PARALLELISM invalid, using default " << THREAD_COUNT << "\n"; }
 	    } else {
-		    std::cerr << "infinitam: COMPRESSION_PARALLELISM not set; using default " << THREAD_COUNT << "\n";
+            spdlog::get("illixr")->error("infinitam: COMPRESSION_PARALLELISM not set; using default {}",
+                                         thread_count_);
 	    }
 	    if (env_fps) {
 		    try { FPS = std::stoul(env_fps); }
-		    catch (...) { std::cerr << "infinitam: FPS invalid, using default " << FPS << "\n"; }
-	    } else {
-		    std::cerr << "infinitam: FPS not set; using default " << FPS << "\n";
+        spdlog::get("illixr")->error("infinitam: COMPRESSION_PARALLELISM invalid, using default {}",
+                                     thread_count_);
+    }
 	    }	
 
 
 
 	    printf("================================InfiniTAM: setup finished==========================\n");
+    spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
         }
 
         void ProcessFrame(switchboard::ptr<const scene_recon_type> datum)
-        {
-            //printf("================================InfiniTAM: frame %d received==========================\n", frame_count);
+    //spdlog::get("illixr")->debug("================================InfiniTAM: frame %d received==========================", frame_count);
+    if (!datum->depth.empty()) {
             if(!datum->depth.empty())
             {
 		    //pyh: convert to transformation matrix
@@ -258,7 +260,8 @@ class infinitam : public plugin {
 			    omp_set_num_threads(THREAD_COUNT);
 			    unsigned numThreads = THREAD_COUNT;
 			    unsigned trianglesPerThread = (face_number + numThreads - 1)/numThreads;
-			    printf("parallel compression, # of threads: %u, # of triangles/threads: %u \n", numThreads, trianglesPerThread);
+            spdlog::get("illixr")->info("parallel compression, # of threads: %u, # of triangles/threads: %u ", numThreads,
+                   trianglesPerThread);
 #pragma omp parallel num_threads(numThreads)
 			    {
 				    unsigned thread_id = omp_get_thread_num();
@@ -303,7 +306,7 @@ class infinitam : public plugin {
 								    prop_writer.PushBackValue(triangleArray[entry].p0.z );	       
 								    break;
 							    default: 
-								    printf("should not happen #1 \n");	       
+                                spdlog::get("illixr")->error("should not happen #1 ");
 								    break;
 						    }
 					    }
@@ -321,7 +324,7 @@ class infinitam : public plugin {
 								    prop_writer.PushBackValue(triangleArray[entry].p1.z );	       
 								    break;
 							    default: 
-								    printf("should not happen #1 \n");	       
+                                spdlog::get("illixr")->error("should not happen #1 ");
 								    break;
 						    }
 					    }
@@ -339,7 +342,7 @@ class infinitam : public plugin {
 								    prop_writer.PushBackValue(triangleArray[entry].p2.z );	       
 								    break;
 							    default: 
-								    printf("should not happen #1 \n");	       
+                                spdlog::get("illixr")->error("should not happen #1 ");
 								    break;
 						    }
 					    }
@@ -383,17 +386,17 @@ class infinitam : public plugin {
 			    sr_latency.flush();
 			    //pyh reset tracking
 			    mainEngine->ResetActiveSceneTracking();
-			    printf("================================InfiniTAM: frame %d finished==========================\n", frame_count);
-			    std::cout.flush();
+            spdlog::get("illixr")->info("================================InfiniTAM: frame %d finished==========================",
+                   frame_count_);
 
 		    }
 		    ORcudaSafeCall(cudaThreadSynchronize());
 	    }
-	    else{   
-		    if(datum->depth.empty()){ printf("depth empty\n");}
+        if (datum->depth.empty()) { spdlog::get("illixr")->info("depth empty"); }
+        if (datum->rgb.empty()) { spdlog::get("illixr")->info("rgb empty"); }
 		    if (datum->rgb.empty()){ printf("rgb empty\n"); }
 	    }
-            if(datum->last_frame)
+        spdlog::get("illixr")->info("reached last frame at %d", frame_count_);
             {
                 printf("reached last frame at %d\n", frame_count);
 		std::cout.flush();

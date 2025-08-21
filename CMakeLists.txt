@@ -6,7 +6,12 @@ cmake_minimum_required(VERSION 3.22)
 message("Current CMake version: ${CMAKE_VERSION}")
 
 PROJECT(InfiniTAM)
-set(CMAKE_BUILD_TYPE RelWithDebInfo)
+
+#################################
+# Specify the CMake module path #
+#################################
+
+SET(CMAKE_MODULE_PATH ${CMAKE_INSTALL_PREFIX}/lib/cmake ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
 find_package(Threads REQUIRED)
 
@@ -90,6 +95,7 @@ ADD_SUBDIRECTORY(ITMLib)
 ADD_SUBDIRECTORY(MiniSlamGraphLib)
 ADD_SUBDIRECTORY(ORUtils)
 add_library(plugin SHARED plugin.cpp)
+find_package(spdlog REQUIRED)
 #TARGET_LINK_LIBRARIES(plugin ${DRACO_LIB} CLIEngine InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
 TARGET_LINK_LIBRARIES(plugin ${draco_LIBRARIES} InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
