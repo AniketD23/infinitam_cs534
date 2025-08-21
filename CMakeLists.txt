@@ -86,6 +86,12 @@ set(PLUGIN_NAME plugin.infinitam${ILLIXR_BUILD_SUFFIX})
 
 add_library(${PLUGIN_NAME} SHARED plugin.cpp
             plugin.hpp
+            ${ILLIXR_ROOT}/illixr/plugin.hpp
+            ${ILLIXR_ROOT}/illixr/switchboard.hpp
+            ${ILLIXR_ROOT}/illixr/data_format/scene_reconstruction.hpp
+            ${ILLIXR_ROOT}/illixr/data_format/mesh.hpp
+            ${ILLIXR_ROOT}/illixr/relative_clock.hpp
+            ${ILLIXR_ROOT}/illixr/phonebook.hpp
 )
 find_package(spdlog REQUIRED)
 #TARGET_LINK_LIBRARIES(plugin ${DRACO_LIB} CLIEngine InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
@@ -94,3 +100,5 @@ target_include_directories(${PLUGIN_NAME} PUBLIC ${ILLIXR_ROOT})
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
 target_link_libraries(${PLUGIN_NAME} PUBLIC ${Boost_LIBRARIES} ${OpenCV_LIBS} Eigen3::Eigen)
+
+install(TARGETS ${PLUGIN_NAME} DESTINATION lib)
