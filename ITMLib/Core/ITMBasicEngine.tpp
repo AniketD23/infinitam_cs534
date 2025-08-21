@@ -56,7 +56,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMLibSettings *settings, co
 	tracker->UpdateInitialPose(trackingState);
 
 	view = NULL; // will be allocated by the view builder
-	
+
 	if (settings->behaviourOnFailure == settings->FAILUREMODE_RELOCALISE)
 		relocaliser = new FernRelocLib::Relocaliser<float>(imgSize_d, Vector2f(settings->sceneParams.viewFrustum_min, settings->sceneParams.viewFrustum_max), 0.2f, 500, 4);
 	else relocaliser = NULL;
@@ -64,7 +64,7 @@ ITMBasicEngine<TVoxel,TIndex>::ITMBasicEngine(const ITMLibSettings *settings, co
 	kfRaycast = new ITMUChar4Image(imgSize_d, memoryType);
 
 	const std::vector<double> divisors{30.0, 15.0, 10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0, 3.0, 2.0, 1.0};
-    
+
 	pidController = new ORUtils::PIDController(
 			settings->K_p,       // Kp
 			settings->K_i,       // Ki
@@ -167,7 +167,7 @@ void ITMBasicEngine<TVoxel,TIndex>::SaveSceneToMesh(const char *objFileName)
 	if (meshingEngine == NULL) return;
 
 	const int allocatedBricks = scene->index.getNumAllocatedVoxelBlocks() - scene->localVBA.lastFreeBlockId - 1;
-	
+
 	// We get roughly 100 triangles per brick; rounding that up to 128
 	const int expectedTriangles = allocatedBricks * 128;
 
@@ -176,7 +176,7 @@ void ITMBasicEngine<TVoxel,TIndex>::SaveSceneToMesh(const char *objFileName)
 #endif
 
 	ITMMesh *mesh = new ITMMesh(settings->GetMemoryType(), expectedTriangles);
-	//pyh we don't need the orignal version, we can pass in expect 0 
+	//pyh we don't need the orignal version, we can pass in expect 0
 	meshingEngine->MeshScene(mesh, scene,0);
 	mesh->WriteOBJ(objFileName);
 
@@ -191,7 +191,7 @@ void ITMBasicEngine<TVoxel, TIndex>::SaveToFile()
 
 	std::string saveOutputDirectory = "State/";
 	std::string relocaliserOutputDirectory = saveOutputDirectory + "Relocaliser/", sceneOutputDirectory = saveOutputDirectory + "Scene/";
-	
+
 	MakeDir(saveOutputDirectory.c_str());
 	MakeDir(relocaliserOutputDirectory.c_str());
 	MakeDir(sceneOutputDirectory.c_str());
@@ -218,7 +218,7 @@ void ITMBasicEngine<TVoxel, TIndex>::LoadFromFile()
 
 		relocaliser_temp->LoadFromDirectory(relocaliserInputDirectory);
 
-		delete relocaliser; 
+		delete relocaliser;
 		relocaliser = relocaliser_temp;
 	}
 	catch (std::runtime_error &e)
@@ -467,7 +467,7 @@ void ITMBasicEngine<TVoxel,TIndex>::Quaternion2Matrix(std::vector<double> &in_po
 	quat.z() = in_pose[6];
 
 	Eigen::Matrix3f rot = quat.normalized().toRotationMatrix();
-	Eigen::Vector3f pos = {in_pose[1], in_pose[2], in_pose[3]};
+	Eigen::Vector3f pos = {static_cast<float>(in_pose[1]), static_cast<float>(in_pose[2]), static_cast<float>(in_pose[3])};
 
 	// ICP pose mapping
 	out_pose = {
@@ -507,7 +507,7 @@ void ITMBasicEngine<TVoxel, TIndex>::SkipFrame(void)
 	if (!seq_pose.empty())
 		seq_pose.pop();
 }
-//pyh my per-frame function, main thing is supporting how we load pose 
+//pyh my per-frame function, main thing is supporting how we load pose
 template <typename TVoxel, typename TIndex>
 ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ORUtils::Matrix4<float> cur_transform, ITMIMUMeasurement *imuMeasurement)
 {
@@ -612,7 +612,7 @@ ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITM
 			trackingState->pose_d->SetFrom(&keyframe.pose);
 
 			denseMapper->UpdateVisibleList(view, trackingState, scene, renderState_live, true);
-			trackingController->Prepare(trackingState, scene, view, visualisationEngine, renderState_live); 
+			trackingController->Prepare(trackingState, scene, view, visualisationEngine, renderState_live);
 			trackingController->Track(trackingState, view);
 
 			trackerResult = trackingState->trackerResult;
@@ -667,7 +667,7 @@ ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITM
 	visibleBricks.push_back(((ITMRenderState_VH *) renderState_live)->noVisibleEntries);
 
 	//std::cout << "============== End Basic Engine  ================" << std::endl;
-    
+
 	return trackerResult;
 }
 
@@ -783,7 +783,7 @@ ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITM
 			trackingState->pose_d->SetFrom(&keyframe.pose);
 
 			denseMapper->UpdateVisibleList(view, trackingState, scene, renderState_live, true);
-			trackingController->Prepare(trackingState, scene, view, visualisationEngine, renderState_live); 
+			trackingController->Prepare(trackingState, scene, view, visualisationEngine, renderState_live);
 			trackingController->Track(trackingState, view);
 
 			trackerResult = trackingState->trackerResult;
@@ -838,7 +838,7 @@ ITMTrackingState::TrackingResult ITMBasicEngine<TVoxel,TIndex>::ProcessFrame(ITM
 	visibleBricks.push_back(((ITMRenderState_VH *) renderState_live)->noVisibleEntries);
 
 	std::cout << "============== End Basic Engine  ================" << std::endl;
-    
+
 	return trackerResult;
 }
 
@@ -954,7 +954,7 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 	case ITMBasicEngine::InfiniTAM_IMAGE_ORIGINAL_RGB:
 		std::cout<<"changed dimension: "<<view->rgb->noDims<<std::endl;
 		out->ChangeDims(view->rgb->noDims);
-		if (settings->deviceType == ITMLibSettings::DEVICE_CUDA) 
+		if (settings->deviceType == ITMLibSettings::DEVICE_CUDA)
 			out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CUDA_TO_CPU);
 		else out->SetFrom(view->rgb, ORUtils::MemoryBlock<Vector4u>::CPU_TO_CPU);
 		break;
@@ -996,7 +996,7 @@ void ITMBasicEngine<TVoxel,TIndex>::GetImage(ITMUChar4Image *out, GetImageType g
 		ORUtils::Image<Vector4u> *srcImage = NULL;
 		if (relocalisationCount != 0) srcImage = kfRaycast;
 		else srcImage = renderState_live->raycastImage;
-        
+
 		out->ChangeDims(srcImage->noDims);
 		std::cout<<"changed dimension: "<<srcImage->noDims<<std::endl;
 		if (settings->deviceType == ITMLibSettings::DEVICE_CUDA)
