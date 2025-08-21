@@ -22,13 +22,7 @@ message(STATUS "EIGEN Location: ${EIGEN3_INCLUDE_DIR}")
 find_package(OpenCV 4 REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS})
 
-find_package(PkgConfig REQUIRED)
-if(ILLIXR_PKG_CFG)
-    set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${ILLIXR_PKG_CFG}")
-endif()
-
-pkg_check_module(draco REQUIRED draco) 
-
+find_package(draco_illixr REQUIRED CONFIG)
 # Prefer GLVND
 if (POLICY CMP0072)
   cmake_policy (SET CMP0072 NEW)
@@ -95,7 +89,7 @@ add_library(${PLUGIN_NAME} SHARED plugin.cpp
 )
 find_package(spdlog REQUIRED)
 #TARGET_LINK_LIBRARIES(plugin ${DRACO_LIB} CLIEngine InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
-TARGET_LINK_LIBRARIES(plugin ${draco_LIBRARIES} InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
+TARGET_LINK_LIBRARIES(${PLUGIN_NAME} PUBLIC draco_illixr::draco InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib spdlog::spdlog)
 target_include_directories(${PLUGIN_NAME} PUBLIC ${ILLIXR_ROOT})
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)

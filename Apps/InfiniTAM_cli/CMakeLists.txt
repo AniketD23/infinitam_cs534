@@ -55,10 +55,9 @@ message(STATUS "CUDA Library Directory: ${CUDA_LIBRARY_DIRS}")
 # Specify the libraries to link #
 #################################
 
-#TARGET_LINK_LIBRARIES(${targetname} /media/yihan/Hy_SSD/Efficient_mesh_streaming/libdraco.a InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
 ADD_LIBRARY(CLIEngine STATIC CLIEngine.cpp)
-
-TARGET_LINK_LIBRARIES(${targetname} ${DRACO_LIB} InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib) 
+TARGET_LINK_LIBRARIES(CLIEngine draco_illixr::draco)
+TARGET_LINK_LIBRARIES(${targetname} draco_illixr::draco InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/LinkBoost.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/LinkOpenNI.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/LinkPNG.cmake)

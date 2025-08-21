@@ -11,13 +11,10 @@
 #include <iostream>
 #include <memory>
 #include <spdlog/spdlog.h>
-#include <draco/io/ply_reader.h>
-#include "draco/io/ply_property_writer.h"
-#include "draco/io/ply_decoder.h"
-#include "draco/compression/encode.h" 
-#include "draco/compression/expert_encode.h"
-#include "draco/io/file_utils.h"
 
+#include "draco_illixr/io/ply_reader.h"
+#include "draco_illixr/io/ply_property_writer.h"
+#include "draco_illixr/io/file_utils.h"
 
 using namespace ILLIXR;
 using namespace ILLIXR::data_format;
@@ -125,20 +122,20 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     }
 
     spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
-        }
+}
 
 void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
     //spdlog::get("illixr")->debug("================================InfiniTAM: frame %d received==========================", frame_count);
     if (!datum->depth.empty()) {
         //pyh: convert to transformation matrix
         Eigen::Matrix3f rot = datum->pose.orientation.normalized().toRotationMatrix();
-		    ORUtils::Matrix4<float> cur_trans_matrix;
-		    cur_trans_matrix = {
-			    rot(0, 0), rot(1, 0), rot(2, 0), 0.0f,
-			    rot(0, 1), rot(1, 1), rot(2, 1), 0.0f,
-			    rot(0, 2), rot(1, 2), rot(2, 2), 0.0f,
-			    datum->pose.position.x(), datum->pose.position.y(), datum->pose.position.z(), 1.0f
-		    };
+        ORUtils::Matrix4<float> cur_trans_matrix;
+        cur_trans_matrix = {
+                rot(0, 0), rot(1, 0), rot(2, 0), 0.0f,
+                rot(0, 1), rot(1, 1), rot(2, 1), 0.0f,
+                rot(0, 2), rot(1, 2), rot(2, 2), 0.0f,
+                datum->pose.position.x(), datum->pose.position.y(), datum->pose.position.z(), 1.0f
+        };
 
         // Set first pose
         if (frame_count_ == 0) {
@@ -157,8 +154,8 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         //pyh main reconstruction (volumetric fusion) function
         main_engine_->ProcessFrame(input_RGB_image_, input_raw_depth_image_, cur_trans_matrix);
 
-		    auto frame_end = std::chrono::high_resolution_clock::now();
-		    auto frame_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_end - frame_start).count();
+        auto frame_end = std::chrono::high_resolution_clock::now();
+        auto frame_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_end - frame_start).count();
 
         auto sinceEpoch = frame_start.time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
@@ -173,7 +170,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             main_engine_->GetMesh(mesh_, 1);
 #endif
             //pyh This is for dumping out the mesh directly to file
-			    //std::string merge_name = this->scene_number + "_" + std::to_string(frame_count) +".obj";
+            //std::string merge_name = this->scene_number + "_" + std::to_string(frame_count) +".obj";
             //mesh->WriteOBJ(merge_name.c_str());
 
             if (!cpu_triangles_ || cpu_triangles_->dataSize < mesh_->noTotalTriangles) {
@@ -279,114 +276,118 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             spdlog::get("illixr")->info("parallel compression, # of threads: %u, # of triangles/threads: %u ", numThreads,
                    trianglesPerThread);
 #pragma omp parallel num_threads(numThreads)
-			    {
-				    unsigned thread_id = omp_get_thread_num();
+            {
+                unsigned thread_id = omp_get_thread_num();
 
-				    unsigned startTriangle = thread_id * trianglesPerThread;
+                unsigned startTriangle = thread_id * trianglesPerThread;
                 unsigned endTriangle = std::min((thread_id + 1) * trianglesPerThread, face_number);
-				    unsigned per_faces = endTriangle - startTriangle;
+                unsigned per_faces = endTriangle - startTriangle;
                 unsigned per_vertices = per_faces * 3;
-				    std::unique_ptr<draco::PlyReader> ply_reader(new draco::PlyReader());
+                std::unique_ptr<draco_illixr::PlyReader> ply_reader(new draco_illixr::PlyReader());
 
-				    ply_reader->format_= draco::PlyReader::kAscii;
+                ply_reader->format_ = draco_illixr::PlyReader::kAscii;
                 ply_reader->element_index_["vertex"] = 0;
                 ply_reader->elements_.emplace_back("vertex", per_vertices);
-				    ply_reader->elements_.back().AddProperty(draco::PlyProperty("x",draco::DT_FLOAT32, draco::DT_INVALID)); 
-				    ply_reader->elements_.back().AddProperty(draco::PlyProperty("y",draco::DT_FLOAT32, draco::DT_INVALID)); 
-				    ply_reader->elements_.back().AddProperty(draco::PlyProperty("z",draco::DT_FLOAT32, draco::DT_INVALID)); 
+                ply_reader->elements_.back().AddProperty(draco_illixr::PlyProperty("x", draco_illixr::DT_FLOAT32, draco_illixr::DT_INVALID));
+                ply_reader->elements_.back().AddProperty(draco_illixr::PlyProperty("y", draco_illixr::DT_FLOAT32, draco_illixr::DT_INVALID));
+                ply_reader->elements_.back().AddProperty(draco_illixr::PlyProperty("z", draco_illixr::DT_FLOAT32, draco_illixr::DT_INVALID));
 
                 ply_reader->element_index_["face"] = 1;
                 ply_reader->elements_.emplace_back("face", per_faces);
 
-				    ply_reader->elements_.back().AddProperty(draco::PlyProperty("vertex_indices",draco::DT_INT32, draco::DT_UINT8));
+                ply_reader->elements_.back().AddProperty(
+                        draco_illixr::PlyProperty("vertex_indices", draco_illixr::DT_INT32, draco_illixr::DT_UINT8));
 
-				    ply_reader->elements_.back().AddProperty(draco::PlyProperty("vb_x",draco::DT_INT32, draco::DT_INVALID)); 
-				    ply_reader->elements_.back().AddProperty(draco::PlyProperty("vb_y",draco::DT_INT32, draco::DT_INVALID)); 
-				    ply_reader->elements_.back().AddProperty(draco::PlyProperty("vb_z",draco::DT_INT32, draco::DT_INVALID)); 
+                ply_reader->elements_.back().AddProperty(
+                        draco_illixr::PlyProperty("vb_x", draco_illixr::DT_INT32, draco_illixr::DT_INVALID));
+                ply_reader->elements_.back().AddProperty(
+                        draco_illixr::PlyProperty("vb_y", draco_illixr::DT_INT32, draco_illixr::DT_INVALID));
+                ply_reader->elements_.back().AddProperty(
+                        draco_illixr::PlyProperty("vb_z", draco_illixr::DT_INT32, draco_illixr::DT_INVALID));
 
-				    draco::PlyElement &vertex_element = ply_reader->elements_[0];
-				    draco::PlyElement &face_element = ply_reader->elements_[1];
+                draco_illixr::PlyElement &vertex_element = ply_reader->elements_[0];
+                draco_illixr::PlyElement &face_element = ply_reader->elements_[1];
 
                 for (unsigned entry = startTriangle; entry < endTriangle; ++entry) {
                     for (int i = 0; i < vertex_element.num_properties(); ++i) {
-						    draco::PlyProperty &prop = vertex_element.property(i);
-						    draco::PlyPropertyWriter<float> prop_writer(&prop);
-						    switch(i){
-							    case 0:
+                        draco_illixr::PlyProperty &prop = vertex_element.property(i);
+                        draco_illixr::PlyPropertyWriter<float> prop_writer(&prop);
+                        switch (i) {
+                            case 0:
                                 prop_writer.PushBackValue(triangleArray[entry].p0.x);
-								    break;
-							    case 1:
+                                break;
+                            case 1:
                                 prop_writer.PushBackValue(triangleArray[entry].p0.y);
-								    break;
-							    case 2:
+                                break;
+                            case 2:
                                 prop_writer.PushBackValue(triangleArray[entry].p0.z);
-								    break;
-							    default: 
+                                break;
+                            default:
                                 spdlog::get("illixr")->error("should not happen #1 ");
-								    break;
-						    }
-					    }
+                                break;
+                        }
+                    }
                     for (int i = 0; i < vertex_element.num_properties(); ++i) {
-						    draco::PlyProperty &prop = vertex_element.property(i);
-						    draco::PlyPropertyWriter<float> prop_writer(&prop);
-						    switch(i){
-							    case 0:
+                        draco_illixr::PlyProperty &prop = vertex_element.property(i);
+                        draco_illixr::PlyPropertyWriter<float> prop_writer(&prop);
+                        switch (i) {
+                            case 0:
                                 prop_writer.PushBackValue(triangleArray[entry].p1.x);
-								    break;
-							    case 1:
+                                break;
+                            case 1:
                                 prop_writer.PushBackValue(triangleArray[entry].p1.y);
-								    break;
-							    case 2:
+                                break;
+                            case 2:
                                 prop_writer.PushBackValue(triangleArray[entry].p1.z);
-								    break;
-							    default: 
+                                break;
+                            default:
                                 spdlog::get("illixr")->error("should not happen #1 ");
-								    break;
-						    }
-					    }
+                                break;
+                        }
+                    }
                     for (int i = 0; i < vertex_element.num_properties(); ++i) {
-						    draco::PlyProperty &prop = vertex_element.property(i);
-						    draco::PlyPropertyWriter<float> prop_writer(&prop);
-						    switch(i){
-							    case 0:
+                        draco_illixr::PlyProperty &prop = vertex_element.property(i);
+                        draco_illixr::PlyPropertyWriter<float> prop_writer(&prop);
+                        switch (i) {
+                            case 0:
                                 prop_writer.PushBackValue(triangleArray[entry].p2.x);
-								    break;
-							    case 1:
+                                break;
+                            case 1:
                                 prop_writer.PushBackValue(triangleArray[entry].p2.y);
-								    break;
-							    case 2:
+                                break;
+                            case 2:
                                 prop_writer.PushBackValue(triangleArray[entry].p2.z);
-								    break;
-							    default: 
+                                break;
+                            default:
                                 spdlog::get("illixr")->error("should not happen #1 ");
-								    break;
-						    }
-					    }
-				    }
+                                break;
+                        }
+                    }
+                }
 
                 for (int entry = 0; entry < face_element.num_entries(); ++entry) {
                     int actual_entry = static_cast<int>(startTriangle) + entry;
                     for (int i = 0; i < face_element.num_properties(); ++i) {
-						    draco::PlyProperty &prop = face_element.property(i);
-						    draco::PlyPropertyWriter<int32_t> prop_writer(&prop);
+                        draco_illixr::PlyProperty &prop = face_element.property(i);
+                        draco_illixr::PlyPropertyWriter<int32_t> prop_writer(&prop);
                         switch (i) {
-							    case 0:
+                            case 0:
                                 prop.list_data_.push_back(static_cast<long>(prop.data_.size()) / prop.data_type_num_bytes_);
-								    prop.list_data_.push_back(3);
-								    int val = entry * 3;
-								    int val_1 = entry * 3 + 1;
-								    int val_2 = entry * 3 + 2;
-								    prop_writer.PushBackValue(val_2);
-								    prop_writer.PushBackValue(val_1);
-								    prop_writer.PushBackValue(val);
-								    break;
-							    case 1:
-								    prop_writer.PushBackValue(triangleArray[actual_entry].vb_info.x);	       
-								    break;
-							    case 2:
-								    prop_writer.PushBackValue(triangleArray[actual_entry].vb_info.y);	       
-								    break;
-							    case 3:
+                                prop.list_data_.push_back(3);
+                                int val = entry * 3;
+                                int val_1 = entry * 3 + 1;
+                                int val_2 = entry * 3 + 2;
+                                prop_writer.PushBackValue(val_2);
+                                prop_writer.PushBackValue(val_1);
+                                prop_writer.PushBackValue(val);
+                                break;
+                            case 1:
+                                prop_writer.PushBackValue(triangleArray[actual_entry].vb_info.x);
+                                break;
+                            case 2:
+                                prop_writer.PushBackValue(triangleArray[actual_entry].vb_info.y);
+                                break;
+                            case 3:
                                 prop_writer.PushBackValue(triangleArray[actual_entry].vb_info.z);
                                 break;
                             default:
@@ -407,7 +408,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             spdlog::get("illixr")->info("================================InfiniTAM: frame %d finished==========================",
                    frame_count_);
 
-		    }
+        }
         ORcudaSafeCall(cudaThreadSynchronize());
     } else {
         if (datum->depth.empty()) { spdlog::get("illixr")->info("depth empty"); }
@@ -419,7 +420,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
     }
 
     frame_count_++;
-        }
+}
 
 
 PLUGIN_MAIN(infinitam)
