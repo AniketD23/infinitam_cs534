@@ -15,7 +15,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_INSTALL_PREFIX}/lib/cmake ${CMAKE_MODULE_PATH} "${
 
 find_package(Threads REQUIRED)
 
-find_package(Eigen3 REQUIRED)
+find_package(Eigen3 REQUIRED CONFIG)
 include_directories(${EIGEN3_INCLUDE_DIR})
 message(STATUS "Eigen3 version: ${Eigen3_VERSION}")
 message(STATUS "EIGEN Location: ${EIGEN3_INCLUDE_DIR}")
@@ -34,19 +34,13 @@ if (POLICY CMP0072)
   cmake_policy (SET CMP0072 NEW)
 endif(POLICY CMP0072)
 
-find_program(CLANG_EXE clang)
-find_program(CLANG_CXX_EXE NAMES clang-cpp clang++)
-if(NOT CLANG_CXX OR NOT CLANG_CXX_EXE)
-    message(FATAL_ERROR "This project requires the clang compiler.")
+find_program(CLANG_EXE clang REQUIRED)
+find_program(CLANG_CXX_EXE REQUIRED NAMES clang-cpp clang++)
+if(NOT CLANG_EXE OR NOT CLANG_CXX_EXE)
+    message(FATAL_ERROR "This project requires the clang compiler. ${CLA}")
 endif()
-set(CMAKE_C_COMPILER ${CLANG_EXE})
-set(CMAKE_CXX_COMPILER ${CLANG_CXX_EXE})
-
-#################################
-# Specify the CMake module path #
-#################################
-
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+set(CMAKE_C_COMPILER ${CLANG_EXE} CACHE FILEPATH "" FORCE)
+set(CMAKE_CXX_COMPILER ${CLANG_CXX_EXE} CACHE FILEPATH "" FORCE)
 
 #################################
 # Add additional compiler flags #
@@ -94,10 +88,15 @@ ADD_SUBDIRECTORY(InputSource)
 ADD_SUBDIRECTORY(ITMLib)
 ADD_SUBDIRECTORY(MiniSlamGraphLib)
 ADD_SUBDIRECTORY(ORUtils)
-add_library(plugin SHARED plugin.cpp)
+set(PLUGIN_NAME plugin.infinitam${ILLIXR_BUILD_SUFFIX})
+
+add_library(${PLUGIN_NAME} SHARED plugin.cpp
+            plugin.hpp
+)
 find_package(spdlog REQUIRED)
 #TARGET_LINK_LIBRARIES(plugin ${DRACO_LIB} CLIEngine InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
 TARGET_LINK_LIBRARIES(plugin ${draco_LIBRARIES} InputSource ITMLib MiniSlamGraphLib ORUtils FernRelocLib)
+target_include_directories(${PLUGIN_NAME} PUBLIC ${ILLIXR_ROOT})
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
-target_link_libraries(plugin ${Boost_LIBRARIES} ${OpenCV_LIBS} Eigen3::Eigen)
+target_link_libraries(${PLUGIN_NAME} PUBLIC ${Boost_LIBRARIES} ${OpenCV_LIBS} Eigen3::Eigen)
