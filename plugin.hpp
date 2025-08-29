@@ -35,18 +35,7 @@ private:
     //ILLIXR related variables
     const std::shared_ptr<switchboard> switchboard_;
     //for parallel
-    switchboard::writer<data_format::mesh_type> mesh_0_;
-    switchboard::writer<data_format::mesh_type> mesh_1_;
-    switchboard::writer<data_format::mesh_type> mesh_2_;
-    switchboard::writer<data_format::mesh_type> mesh_3_;
-    switchboard::writer<data_format::mesh_type> mesh_4_;
-    switchboard::writer<data_format::mesh_type> mesh_5_;
-    switchboard::writer<data_format::mesh_type> mesh_6_;
-    switchboard::writer<data_format::mesh_type> mesh_7_;
-    //switchboard::writer<data_format::mesh_type> mesh_8_;
-    //switchboard::writer<data_format::mesh_type> mesh_9_;
-    //switchboard::writer<data_format::mesh_type> mesh_10_;
-    //switchboard::writer<data_format::mesh_type> mesh_11_;
+    switchboard::writer<data_format::mesh_type> mesh_writer_;
 
     switchboard::writer<data_format::vb_type> vb_list_;
 
@@ -64,7 +53,7 @@ private:
     std::string merge_name_;
     unsigned frame_count_;
     unsigned fps_ = 15;
-    unsigned thread_count_ = 8;
+    unsigned thread_count_;
 
     std::ofstream sr_latency_;
     const std::string data_path_ = std::filesystem::current_path().string() + "/recorded_data";

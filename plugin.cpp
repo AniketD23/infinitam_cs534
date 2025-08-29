@@ -22,18 +22,7 @@ using namespace ILLIXR::data_format;
 infinitam::infinitam(const std::string& name_, phonebook *pb_)
         : plugin{name_, pb_}
         , switchboard_{phonebook_->lookup_impl<switchboard>()}
-        , mesh_0_{switchboard_->get_writer<mesh_type>("requested_scene_0")}
-        , mesh_1_{switchboard_->get_writer<mesh_type>("requested_scene_1")}
-        , mesh_2_{switchboard_->get_writer<mesh_type>("requested_scene_2")}
-        , mesh_3_{switchboard_->get_writer<mesh_type>("requested_scene_3")}
-        , mesh_4_{switchboard_->get_writer<mesh_type>("requested_scene_4")}
-        , mesh_5_{switchboard_->get_writer<mesh_type>("requested_scene_5")}
-        , mesh_6_{switchboard_->get_writer<mesh_type>("requested_scene_6")}
-        , mesh_7_{switchboard_->get_writer<mesh_type>("requested_scene_7")}
-        //, mesh_8_{switchboard_->get_writer<mesh_type>("requested_scene_8")}
-        //, mesh_9_{switchboard_->get_writer<mesh_type>("requested_scene_9")}
-        //, mesh_10_{switchboard_->get_writer<mesh_type>("requested_scene_10")}
-        //, mesh_11_{switchboard_->get_writer<mesh_type>("requested_scene_11")}
+        , mesh_writer_{switchboard_->get_writer<mesh_type>("requested_scene")}
         , vb_list_{switchboard_->get_writer<vb_type>("unique_VB_list")} {
     //pyh For now, I just hardcode internal settings that exists in ScanNet.s
     //Later we might need to have a more intelligent way to get these variables
@@ -45,6 +34,8 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     internal_settings_->fusionFreq = 30.0;
     internal_settings_->useDecoupledRaycasting = true;
     internal_settings_->raycastingFreq = 1.0;
+
+    thread_count_ = switchboard_->get_env_ulong("MESH_DECOMPRESS_PARALLELISM", 8);
 
     calib_ = new ITMLib::ITMRGBDCalib();
     std::string illixr_data = switchboard_->get_env("ILLIXR_DATA");
@@ -98,15 +89,15 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     sr_latency_.open(data_path_ + "/sr_latency.csv");
 
     try {
-        uint temp = switchboard_->get_env_ulong("COMPRESSION_PARALLELISM");
+        uint temp = switchboard_->get_env_ulong("MESH_COMPRESS_PARALLELISM", 8);
         if (temp != 0) {
             thread_count_ = temp;
         } else {
-            spdlog::get("illixr")->error("infinitam: COMPRESSION_PARALLELISM not set; using default {}",
+            spdlog::get("illixr")->error("infinitam: MESH_COMPRESS_PARALLELISM not set; using default {}",
                                          thread_count_);
         }
     } catch (...) {
-        spdlog::get("illixr")->error("infinitam: COMPRESSION_PARALLELISM invalid, using default {}",
+        spdlog::get("illixr")->error("infinitam: MESH_COMPRESS_PARALLELISM invalid, using default {}",
                                      thread_count_);
     }
 
@@ -210,65 +201,6 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
 
             auto roi_start = std::chrono::high_resolution_clock::now();
             bool set_active = false;
-            std::vector<std::function<void(std::unique_ptr<draco_illixr::PlyReader> &&, unsigned, unsigned,
-                                           unsigned)>> operations = {
-                    [&](std::unique_ptr<draco_illixr::PlyReader> &&ply_reader, unsigned face_number, unsigned per_vertices,
-                        unsigned num_partitions) {  /* do something for case 0 */
-                        mesh_0_.put(mesh_0_.allocate<mesh_type>(
-                                mesh_type{std::move(ply_reader), scene_id, 0, num_partitions, face_number, per_vertices,
-                                          set_active}));
-                    },
-                    [&](std::unique_ptr<draco_illixr::PlyReader> &&ply_reader, unsigned face_number, unsigned per_vertices,
-                        unsigned num_partitions) {  /* do something for case 1 */
-                        mesh_1_.put(mesh_1_.allocate<mesh_type>(
-                                mesh_type{std::move(ply_reader), scene_id, 1, num_partitions, face_number, per_vertices,
-                                          set_active}));
-                    },
-                    [&](std::unique_ptr<draco_illixr::PlyReader> &&ply_reader, unsigned face_number, unsigned per_vertices,
-                        unsigned num_partitions) {  /* do something for case 2 */
-                        mesh_2_.put(mesh_2_.allocate<mesh_type>(
-                                mesh_type{std::move(ply_reader), scene_id, 2, num_partitions, face_number, per_vertices,
-                                          set_active}));
-                    },
-                    [&](std::unique_ptr<draco_illixr::PlyReader> &&ply_reader, unsigned face_number, unsigned per_vertices,
-                        unsigned num_partitions) {  /* do something for case 3 */
-                        mesh_3_.put(mesh_3_.allocate<mesh_type>(
-                                mesh_type{std::move(ply_reader), scene_id, 3, num_partitions, face_number, per_vertices,
-                                          set_active}));
-                    },
-                    [&](std::unique_ptr<draco_illixr::PlyReader> &&ply_reader, unsigned face_number, unsigned per_vertices,
-                        unsigned num_partitions) {  /* do something for case 4 */
-                        mesh_4_.put(mesh_4_.allocate<mesh_type>(
-                                mesh_type{std::move(ply_reader), scene_id, 4, num_partitions, face_number, per_vertices,
-                                          set_active}));
-                    },
-                    [&](std::unique_ptr<draco_illixr::PlyReader> &&ply_reader, unsigned face_number, unsigned per_vertices,
-                        unsigned num_partitions) {  /* do something for case 5 */
-                        mesh_5_.put(mesh_5_.allocate<mesh_type>(
-                                mesh_type{std::move(ply_reader), scene_id, 5, num_partitions, face_number, per_vertices,
-                                          set_active}));
-                    },
-                    [&](std::unique_ptr<draco_illixr::PlyReader> &&ply_reader, unsigned face_number, unsigned per_vertices,
-                        unsigned num_partitions) {  /* do something for case 6 */
-                        mesh_6_.put(mesh_6_.allocate<mesh_type>(
-                                mesh_type{std::move(ply_reader), scene_id, 6, num_partitions, face_number, per_vertices,
-                                          set_active}));
-                    },
-                    [&](std::unique_ptr<draco_illixr::PlyReader> &&ply_reader, unsigned face_number, unsigned per_vertices,
-                        unsigned num_partitions) {  /* do something for case 7 */
-                        mesh_7_.put(mesh_7_.allocate<mesh_type>(
-                                mesh_type{std::move(ply_reader), scene_id, 7, num_partitions, face_number, per_vertices,
-                                          set_active}));
-                    },
-                    //		    [&](std::unique_ptr<draco_illixr::PlyReader>&& ply_reader, unsigned face_number, unsigned per_vertices, unsigned num_partitions) {  /* do something for case 8 */
-                    //			    mesh_8_.put(mesh_8_.allocate<mesh_type>(mesh_type{std::move(ply_reader), scene_id, 8, num_partitions,face_number, per_vertices, set_active}));},
-                    //		    [&](std::unique_ptr<draco_illixr::PlyReader>&& ply_reader, unsigned face_number, unsigned per_vertices, unsigned num_partitions) {  /* do something for case 9 */
-                    //			    mesh_9_.put(mesh_9_.allocate<mesh_type>(mesh_type{std::move(ply_reader), scene_id, 9, num_partitions,face_number, per_vertices, set_active}));},
-                    //		    [&](std::unique_ptr<draco_illixr::PlyReader>&& ply_reader, unsigned face_number, unsigned per_vertices, unsigned num_partitions) {  /* do something for case 10 */
-                    //			    mesh_10_.put(mesh_10_.allocate<mesh_type>(mesh_type{std::move(ply_reader), scene_id, 10, num_partitions,face_number, per_vertices, set_active}));},
-                    //		    [&](std::unique_ptr<draco_illixr::PlyReader>&& ply_reader, unsigned face_number, unsigned per_vertices, unsigned num_partitions) {  /* do something for case 11 */
-                    //			    mesh_11_.put(mesh_11_.allocate<mesh_type>(mesh_type{std::move(ply_reader), scene_id, 11, num_partitions,face_number, per_vertices, set_active}));},
-            };
             omp_set_dynamic(0);
             omp_set_num_threads(static_cast<int>(thread_count_));
             unsigned numThreads = thread_count_;
@@ -395,7 +327,11 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
                         }
                     }
                 }
-                operations[omp_get_thread_num()](std::move(ply_reader), per_faces, per_vertices, numThreads);
+
+                mesh_writer_.put(mesh_writer_.allocate<mesh_type>(
+                        mesh_type{static_cast<uint>(omp_get_thread_num()), std::move(ply_reader), scene_id, 0,
+                                  numThreads, per_faces, per_vertices, set_active}));
+
             }
 
             auto roi_end = std::chrono::high_resolution_clock::now();
