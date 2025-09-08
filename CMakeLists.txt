@@ -76,7 +76,7 @@ ENDIF()
 # Add subdirectories #
 ######################
 
-ADD_SUBDIRECTORY(Apps)
+#ADD_SUBDIRECTORY(Apps)
 ADD_SUBDIRECTORY(FernRelocLib)
 ADD_SUBDIRECTORY(InputSource)
 ADD_SUBDIRECTORY(ITMLib)
