@@ -35,7 +35,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     internal_settings_->useDecoupledRaycasting = true;
     internal_settings_->raycastingFreq = 1.0;
 
-    thread_count_ = switchboard_->get_env_ulong("MESH_DECOMPRESS_PARALLELISM", 8);
+    thread_count_ = switchboard_->get_env_ulong("MESH_COMPRESS_PARALLELISM", 8);
 
     calib_ = new ITMLib::ITMRGBDCalib();
     std::string illixr_data = switchboard_->get_env("ILLIXR_DATA");

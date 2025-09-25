@@ -82,7 +82,7 @@ ADD_SUBDIRECTORY(FernRelocLib)
 ADD_SUBDIRECTORY(ITMLib)
 ADD_SUBDIRECTORY(MiniSlamGraphLib)
 ADD_SUBDIRECTORY(ORUtils)
-set(PLUGIN_NAME plugin.infinitam${ILLIXR_BUILD_SUFFIX})
+set(PLUGIN_NAME plugin.ada.infinitam${ILLIXR_BUILD_SUFFIX})
 
 add_library(${PLUGIN_NAME} SHARED plugin.cpp
             plugin.hpp
