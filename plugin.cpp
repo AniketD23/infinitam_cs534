@@ -26,6 +26,9 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         , vb_list_{switchboard_->get_writer<vb_type>("unique_VB_list")} {
     //pyh For now, I just hardcode internal settings that exists in ScanNet.s
     //Later we might need to have a more intelligent way to get these variables
+        printf("ILLIXR_DATA not set\n");
+        fflush(stdout);
+
     internal_settings_ = new ITMLib::ITMLibSettings();
     internal_settings_->useICP = false;
     internal_settings_->useApproximateDepthCheck = false;
@@ -41,8 +44,6 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     std::string illixr_data = switchboard_->get_env("ILLIXR_DATA");
 
     if (illixr_data.empty()) {
-        printf("ILLIXR_DATA not set\n");
-        fflush(stdout);
         throw std::runtime_error("ILLIXR_DATA not set");
     }
 
