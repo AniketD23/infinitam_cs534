@@ -41,6 +41,8 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     std::string illixr_data = switchboard_->get_env("ILLIXR_DATA");
 
     if (illixr_data.empty()) {
+        printf("ILLIXR_DATA not set\n");
+        fflush(stdout);
         throw std::runtime_error("ILLIXR_DATA not set");
     }
 
