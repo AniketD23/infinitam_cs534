@@ -67,8 +67,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
             calib_->intrinsics_d.imgSize
     );
 
-    printf("reached here\n");
-    fflush(stdout);
+
 
     //pyh first allocate for incoming depth & RGB image on CPU, then later copy to GPU
     input_raw_depth_image_ = new ITMShortImage(calib_->intrinsics_d.imgSize, true, false);
@@ -89,8 +88,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     //track how many frame InfiniTAM has processed
     frame_count_ = 0;
 
-    printf("reached here2\n");
-    fflush(stdout);
+
 
     if (!std::filesystem::exists(data_path_)) {
         if (!std::filesystem::create_directory(data_path_)) {
@@ -122,6 +120,8 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     } catch (...) {
         spdlog::get("illixr")->error("infinitam: FPS invalid, using default {}", fps_);
     }
+    printf("reached here3\n");
+    fflush(stdout);
 
     spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
 }
