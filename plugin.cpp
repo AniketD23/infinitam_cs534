@@ -51,14 +51,10 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
 
     const std::string calib_subpath = "/calibration.txt";
     std::string calib_source{illixr_data + calib_subpath};
-    printf("reached here\n");
-    fflush(stdout);
     if (!readRGBDCalib(calib_source.c_str(), *calib_)) {
         spdlog::get("illixr")->error("Read RGBD calibration file failed");
     }
-    printf("reached here2\n");
-    fflush(stdout);
-
+    
     //pyh extract scene name
     std::size_t pos = illixr_data.find_last_of("/");
     scene_number_ = illixr_data.substr(pos + 1);
@@ -70,6 +66,9 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
             calib_->intrinsics_rgb.imgSize,
             calib_->intrinsics_d.imgSize
     );
+
+    printf("reached here\n");
+    fflush(stdout);
 
     //pyh first allocate for incoming depth & RGB image on CPU, then later copy to GPU
     input_raw_depth_image_ = new ITMShortImage(calib_->intrinsics_d.imgSize, true, false);
@@ -89,6 +88,9 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
 
     //track how many frame InfiniTAM has processed
     frame_count_ = 0;
+
+    printf("reached here2\n");
+    fflush(stdout);
 
     if (!std::filesystem::exists(data_path_)) {
         if (!std::filesystem::create_directory(data_path_)) {
