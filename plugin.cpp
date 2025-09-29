@@ -155,14 +155,14 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         if ((frame_count_ % fps_) == 0 && frame_count_ > 0) {
             sr_latency_ << "start " << frame_count_ << " " << millis << "";
             auto start = std::chrono::high_resolution_clock::now();
-#if !defined ACTIVE_SCENE
-            mainEngine->GetMesh(mesh, 2);
-#else
+// #if !defined ACTIVE_SCENE
+//             mainEngine->GetMesh(mesh, 2);
+// #else
             main_engine_->GetMesh(mesh_, 1);
-#endif
+// #endif
             //pyh This is for dumping out the mesh directly to file
-            //std::string merge_name = this->scene_number + "_" + std::to_string(frame_count) +".obj";
-            //mesh->WriteOBJ(merge_name.c_str());
+            std::string merge_name = this->scene_number + "_" + std::to_string(frame_count) +".obj";
+            mesh->WriteOBJ(merge_name.c_str());
 
             if (!cpu_triangles_ || cpu_triangles_->dataSize < mesh_->noTotalTriangles) {
                 cpu_triangles_.reset(
