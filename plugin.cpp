@@ -43,24 +43,21 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     calib_ = new ITMLib::ITMRGBDCalib();
     std::string illixr_data = switchboard_->get_env("ILLIXR_DATA");
 
-    printf("reached here\n");
-    fflush(stdout);
-
-
     if (illixr_data.empty()) {
         throw std::runtime_error("ILLIXR_DATA not set");
     }
-
-    printf("reached here 22222222\n");
-    fflush(stdout);
 
 
 
     const std::string calib_subpath = "/calibration.txt";
     std::string calib_source{illixr_data + calib_subpath};
+    printf("reached here\n");
+    fflush(stdout);
     if (!readRGBDCalib(calib_source.c_str(), *calib_)) {
         spdlog::get("illixr")->error("Read RGBD calibration file failed");
     }
+    printf("reached here2\n");
+    fflush(stdout);
 
     //pyh extract scene name
     std::size_t pos = illixr_data.find_last_of("/");
