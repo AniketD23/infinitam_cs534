@@ -161,8 +161,8 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             main_engine_->GetMesh(mesh_, 1);
 // #endif
             //pyh This is for dumping out the mesh directly to file
-            std::string merge_name = this->scene_number + "_" + std::to_string(frame_count) +".obj";
-            mesh->WriteOBJ(merge_name.c_str());
+            std::string merge_name = this->scene_number_+ "_" + std::to_string(frame_count_) +".obj";
+            mesh_->WriteOBJ(merge_name.c_str());
 
             if (!cpu_triangles_ || cpu_triangles_->dataSize < mesh_->noTotalTriangles) {
                 cpu_triangles_.reset(
