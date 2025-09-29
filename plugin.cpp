@@ -26,8 +26,6 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         , vb_list_{switchboard_->get_writer<vb_type>("unique_VB_list")} {
     //pyh For now, I just hardcode internal settings that exists in ScanNet.s
     //Later we might need to have a more intelligent way to get these variables
-        printf("ILLIXR_DATA not set\n");
-        fflush(stdout);
 
     internal_settings_ = new ITMLib::ITMLibSettings();
     internal_settings_->useICP = false;
@@ -39,6 +37,10 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     internal_settings_->raycastingFreq = 1.0;
 
     thread_count_ = switchboard_->get_env_ulong("MESH_COMPRESS_PARALLELISM", 8);
+
+    printf("reached here\n");
+    fflush(stdout);
+
 
     calib_ = new ITMLib::ITMRGBDCalib();
     std::string illixr_data = switchboard_->get_env("ILLIXR_DATA");
