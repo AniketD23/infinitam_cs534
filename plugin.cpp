@@ -117,6 +117,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
 
 void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
     //spdlog::get("illixr")->debug("================================InfiniTAM: frame %d received==========================", frame_count);
+    printf("InfiniTAM: frame %d received\n", frame_count_);
     if (!datum->depth.empty()) {
         //pyh: convert to transformation matrix
         Eigen::Matrix3f rot = datum->pose.orientation.normalized().toRotationMatrix();
