@@ -38,16 +38,23 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
 
     thread_count_ = switchboard_->get_env_ulong("MESH_COMPRESS_PARALLELISM", 8);
 
-    printf("reached here\n");
-    fflush(stdout);
 
 
     calib_ = new ITMLib::ITMRGBDCalib();
     std::string illixr_data = switchboard_->get_env("ILLIXR_DATA");
 
+    printf("reached here\n");
+    fflush(stdout);
+
+
     if (illixr_data.empty()) {
         throw std::runtime_error("ILLIXR_DATA not set");
     }
+
+    printf("reached here 22222222\n");
+    fflush(stdout);
+
+
 
     const std::string calib_subpath = "/calibration.txt";
     std::string calib_source{illixr_data + calib_subpath};
