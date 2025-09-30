@@ -77,10 +77,10 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         //spdlog::get("illixr")->info("Using the CUDA version of InfiniTAM");
     }
 
-    switchboard_->schedule<scene_recon_type>(id_, "ScanNet_Data",
-                                   [&](switchboard::ptr<const scene_recon_type> datum, std::size_t) {
-                                       this->process_frame(datum);
-                                   });
+    // switchboard_->schedule<scene_recon_type>(id_, "ScanNet_Data",
+    //                                [&](switchboard::ptr<const scene_recon_type> datum, std::size_t) {
+    //                                    this->process_frame(datum);
+    //                                });
 
     //pyh initialize mesh used for mesh extraction
     mesh_ = new ITMLib::ITMMesh(MEMORYDEVICE_CUDA, 0);
@@ -122,7 +122,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     }
 
     printf("InfiniTAM: setup finished\n");
-    ffslush(stdout);
+    fflush(stdout);
     //spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
 }
 
