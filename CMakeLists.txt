@@ -46,8 +46,10 @@ IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
 ENDIF()
 
 IF(NOT MSVC_IDE)
-  SET(CFLAGS_WARN "-Wall -Wextra -Wno-unused-parameter -Wno-strict-aliasing")
-  SET(CMAKE_CXX_FLAGS "-fPIC -O3 -std=c++17 ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")
+  SET(CFLAGS_WARN "-Wall -Wextra -Wno-unused-parameter -Wno-strict-aliasing -Wconversion -Wsign-conversion -Wuninitialized -Werror=uninitialized")
+  #SET(CMAKE_CXX_FLAGS "-fPIC -O3 -std=c++17 -march=native ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "-fPIC -O3 -std=c++17  ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")
+
   #SET(CMAKE_CXX_FLAGS "-fPIC -g ${CFLAGS_WARN} ${CMAKE_CXX_FLAGS}")
 ENDIF()
 

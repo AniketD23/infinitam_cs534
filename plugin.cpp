@@ -26,6 +26,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         , vb_list_{switchboard_->get_writer<vb_type>("unique_VB_list")} {
     //pyh For now, I just hardcode internal settings that exists in ScanNet.s
     //Later we might need to have a more intelligent way to get these variables
+
     internal_settings_ = new ITMLib::ITMLibSettings();
     internal_settings_->useICP = false;
     internal_settings_->useApproximateDepthCheck = false;
@@ -37,6 +38,8 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
 
     thread_count_ = switchboard_->get_env_ulong("MESH_COMPRESS_PARALLELISM", 8);
 
+
+
     calib_ = new ITMLib::ITMRGBDCalib();
     std::string illixr_data = switchboard_->get_env("ILLIXR_DATA");
 
@@ -44,12 +47,14 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         throw std::runtime_error("ILLIXR_DATA not set");
     }
 
+
+
     const std::string calib_subpath = "/calibration.txt";
     std::string calib_source{illixr_data + calib_subpath};
     if (!readRGBDCalib(calib_source.c_str(), *calib_)) {
-        spdlog::get("illixr")->error("Read RGBD calibration file failed");
+        //spdlog::get("illixr")->error("Read RGBD calibration file failed");
     }
-
+    
     //pyh extract scene name
     std::size_t pos = illixr_data.find_last_of("/");
     scene_number_ = illixr_data.substr(pos + 1);
@@ -62,18 +67,20 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
             calib_->intrinsics_d.imgSize
     );
 
+
+
     //pyh first allocate for incoming depth & RGB image on CPU, then later copy to GPU
     input_raw_depth_image_ = new ITMShortImage(calib_->intrinsics_d.imgSize, true, false);
     input_RGB_image_ = new ITMUChar4Image(calib_->intrinsics_rgb.imgSize, true, false);
 
     if (internal_settings_->deviceType == ITMLib::ITMLibSettings::DEVICE_CUDA) {
-        spdlog::get("illixr")->info("Using the CUDA version of InfiniTAM");
+        //spdlog::get("illixr")->info("Using the CUDA version of InfiniTAM");
     }
 
-    switchboard_->schedule<scene_recon_type>(id_, "ScanNet_Data",
-                                   [&](switchboard::ptr<const scene_recon_type> datum, std::size_t) {
-                                       this->process_frame(datum);
-                                   });
+    // switchboard_->schedule<scene_recon_type>(id_, "ScanNet_Data",
+    //                                [&](switchboard::ptr<const scene_recon_type> datum, std::size_t) {
+    //                                    this->process_frame(datum);
+    //                                });
 
     //pyh initialize mesh used for mesh extraction
     mesh_ = new ITMLib::ITMMesh(MEMORYDEVICE_CUDA, 0);
@@ -81,9 +88,11 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     //track how many frame InfiniTAM has processed
     frame_count_ = 0;
 
+
+
     if (!std::filesystem::exists(data_path_)) {
         if (!std::filesystem::create_directory(data_path_)) {
-            spdlog::get("illixr")->error("Failed to create data directory.");
+            //spdlog::get("illixr")->error("Failed to create data directory.");
         }
     }
     sr_latency_.open(data_path_ + "/sr_latency.csv");
@@ -93,12 +102,12 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         if (temp != 0) {
             thread_count_ = temp;
         } else {
-            spdlog::get("illixr")->error("infinitam: MESH_COMPRESS_PARALLELISM not set; using default {}",
-                                         thread_count_);
+            //spdlog::get("illixr")->error("infinitam: MESH_COMPRESS_PARALLELISM not set; using default {}",
+            //                             thread_count_);
         }
     } catch (...) {
-        spdlog::get("illixr")->error("infinitam: MESH_COMPRESS_PARALLELISM invalid, using default {}",
-                                     thread_count_);
+        //spdlog::get("illixr")->error("infinitam: MESH_COMPRESS_PARALLELISM invalid, using default {}",
+        //                             thread_count_);
     }
 
     try {
@@ -106,17 +115,20 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         if (temp != 0) {
             fps_ = temp;
         } else {
-            spdlog::get("illixr")->error("infinitam: FPS not set; using default {}", fps_);
+            //spdlog::get("illixr")->error("infinitam: FPS not set; using default {}", fps_);
         }
     } catch (...) {
-        spdlog::get("illixr")->error("infinitam: FPS invalid, using default {}", fps_);
+        //spdlog::get("illixr")->error("infinitam: FPS invalid, using default {}", fps_);
     }
 
-    spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
+    printf("InfiniTAM: setup finished\n");
+    fflush(stdout);
+    //spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
 }
 
 void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
     //spdlog::get("illixr")->debug("================================InfiniTAM: frame %d received==========================", frame_count);
+    printf("InfiniTAM: frame %zu received\n", static_cast<size_t>(frame_count_));
     if (!datum->depth.empty()) {
         //pyh: convert to transformation matrix
         Eigen::Matrix3f rot = datum->pose.orientation.normalized().toRotationMatrix();
@@ -155,14 +167,14 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         if ((frame_count_ % fps_) == 0 && frame_count_ > 0) {
             sr_latency_ << "start " << frame_count_ << " " << millis << "";
             auto start = std::chrono::high_resolution_clock::now();
-#if !defined ACTIVE_SCENE
-            mainEngine->GetMesh(mesh, 2);
-#else
+// #if !defined ACTIVE_SCENE
+//             mainEngine->GetMesh(mesh, 2);
+// #else
             main_engine_->GetMesh(mesh_, 1);
-#endif
+// #endif
             //pyh This is for dumping out the mesh directly to file
-            //std::string merge_name = this->scene_number + "_" + std::to_string(frame_count) +".obj";
-            //mesh->WriteOBJ(merge_name.c_str());
+            std::string merge_name = this->scene_number_+ "_" + std::to_string(frame_count_) +".obj";
+            mesh_->WriteOBJ(merge_name.c_str());
 
             if (!cpu_triangles_ || cpu_triangles_->dataSize < mesh_->noTotalTriangles) {
                 cpu_triangles_.reset(
@@ -205,8 +217,8 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             omp_set_num_threads(static_cast<int>(thread_count_));
             unsigned numThreads = thread_count_;
             unsigned trianglesPerThread = (face_number + numThreads - 1) / numThreads;
-            spdlog::get("illixr")->info("parallel compression, # of threads: %u, # of triangles/threads: %u ", numThreads,
-                   trianglesPerThread);
+            //spdlog::get("illixr")->info("parallel compression, # of threads: {}, # of triangles/threads: {} ", numThreads,
+            //       trianglesPerThread);
 #pragma omp parallel num_threads(numThreads)
             {
                 unsigned thread_id = omp_get_thread_num();
@@ -255,7 +267,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
                                 prop_writer.PushBackValue(triangleArray[entry].p0.z);
                                 break;
                             default:
-                                spdlog::get("illixr")->error("should not happen #1 ");
+                                //spdlog::get("illixr")->error("should not happen #1 ");
                                 break;
                         }
                     }
@@ -273,7 +285,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
                                 prop_writer.PushBackValue(triangleArray[entry].p1.z);
                                 break;
                             default:
-                                spdlog::get("illixr")->error("should not happen #1 ");
+                                //spdlog::get("illixr")->error("should not happen #1 ");
                                 break;
                         }
                     }
@@ -291,7 +303,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
                                 prop_writer.PushBackValue(triangleArray[entry].p2.z);
                                 break;
                             default:
-                                spdlog::get("illixr")->error("should not happen #1 ");
+                                //spdlog::get("illixr")->error("should not happen #1 ");
                                 break;
                         }
                     }
@@ -341,17 +353,19 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             sr_latency_.flush();
             //pyh reset tracking
             main_engine_->ResetActiveSceneTracking();
-            spdlog::get("illixr")->info("================================InfiniTAM: frame %d finished==========================",
-                   frame_count_);
+            // spdlog::get("illixr")->info("================================InfiniTAM: frame {} finished==========================",
+            //        frame_count_);
 
         }
         ORcudaSafeCall(cudaThreadSynchronize());
     } else {
-        if (datum->depth.empty()) { spdlog::get("illixr")->info("depth empty"); }
-        if (datum->rgb.empty()) { spdlog::get("illixr")->info("rgb empty"); }
+        if (datum->depth.empty()) { //spdlog::get("illixr")->info("depth empty"); 
+            }
+        if (datum->rgb.empty()) { //spdlog::get("illixr")->info("rgb empty"); 
+            }
     }
     if (datum->last_frame) {
-        spdlog::get("illixr")->info("reached last frame at %d", frame_count_);
+        // spdlog::get("illixr")->info("reached last frame at {}", frame_count_);
         sr_latency_.flush();
     }
 
