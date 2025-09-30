@@ -121,7 +121,8 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         //spdlog::get("illixr")->error("infinitam: FPS invalid, using default {}", fps_);
     }
 
-
+    printf("InfiniTAM: setup finished\n");
+    ffslush(stdout);
     //spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
 }
 
