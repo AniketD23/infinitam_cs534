@@ -120,15 +120,14 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     } catch (...) {
         spdlog::get("illixr")->error("infinitam: FPS invalid, using default {}", fps_);
     }
-    printf("reached here3\n");
-    fflush(stdout);
+
 
     spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
 }
 
 void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
     //spdlog::get("illixr")->debug("================================InfiniTAM: frame %d received==========================", frame_count);
-    printf("InfiniTAM: frame %d received\n", frame_count_);
+    printf("InfiniTAM: frame %zu received\n", static_cast<size_t>(frame_count_));
     if (!datum->depth.empty()) {
         //pyh: convert to transformation matrix
         Eigen::Matrix3f rot = datum->pose.orientation.normalized().toRotationMatrix();
@@ -217,7 +216,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             omp_set_num_threads(static_cast<int>(thread_count_));
             unsigned numThreads = thread_count_;
             unsigned trianglesPerThread = (face_number + numThreads - 1) / numThreads;
-            spdlog::get("illixr")->info("parallel compression, # of threads: %u, # of triangles/threads: %u ", numThreads,
+            spdlog::get("illixr")->info("parallel compression, # of threads: {}, # of triangles/threads: {} ", numThreads,
                    trianglesPerThread);
 #pragma omp parallel num_threads(numThreads)
             {
@@ -353,7 +352,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             sr_latency_.flush();
             //pyh reset tracking
             main_engine_->ResetActiveSceneTracking();
-            spdlog::get("illixr")->info("================================InfiniTAM: frame %d finished==========================",
+            spdlog::get("illixr")->info("================================InfiniTAM: frame {} finished==========================",
                    frame_count_);
 
         }
@@ -363,7 +362,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         if (datum->rgb.empty()) { spdlog::get("illixr")->info("rgb empty"); }
     }
     if (datum->last_frame) {
-        spdlog::get("illixr")->info("reached last frame at %d", frame_count_);
+        spdlog::get("illixr")->info("reached last frame at {}", frame_count_);
         sr_latency_.flush();
     }
 
