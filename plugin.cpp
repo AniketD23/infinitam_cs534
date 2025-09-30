@@ -103,7 +103,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
             thread_count_ = temp;
         } else {
             //spdlog::get("illixr")->error("infinitam: MESH_COMPRESS_PARALLELISM not set; using default {}",
-                                         thread_count_);
+            //                             thread_count_);
         }
     } catch (...) {
         //spdlog::get("illixr")->error("infinitam: MESH_COMPRESS_PARALLELISM invalid, using default {}",
@@ -358,8 +358,10 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         }
         ORcudaSafeCall(cudaThreadSynchronize());
     } else {
-        if (datum->depth.empty()) { //spdlog::get("illixr")->info("depth empty"); }
-        if (datum->rgb.empty()) { //spdlog::get("illixr")->info("rgb empty"); }
+        if (datum->depth.empty()) { //spdlog::get("illixr")->info("depth empty"); 
+            }
+        if (datum->rgb.empty()) { //spdlog::get("illixr")->info("rgb empty"); 
+            }
     }
     if (datum->last_frame) {
         // spdlog::get("illixr")->info("reached last frame at {}", frame_count_);
