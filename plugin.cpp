@@ -115,14 +115,11 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         spdlog::get("illixr")->error("infinitam: FPS invalid, using default {}", fps_);
     }
 
-    //printf("InfiniTAM: setup finished\n");
-    //fflush(stdout);
     spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
 }
 
 void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
     spdlog::get("illixr")->debug("================================InfiniTAM: frame %d received==========================", frame_count_);
-    //printf("InfiniTAM: frame %zu received\n", static_cast<size_t>(frame_count_));
     if (!datum->depth.empty()) {
         //pyh: convert to transformation matrix
         Eigen::Matrix3f rot = datum->pose.orientation.normalized().toRotationMatrix();
