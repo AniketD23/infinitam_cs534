@@ -156,19 +156,19 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
 
         auto sinceEpoch = frame_start.time_since_epoch();
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
-        sr_latency_ << "fuse " << frame_count_ << " " << (static_cast<double>(frame_duration) / 1000.0) << "";
+        sr_latency_ << "fuse " << frame_count_ << " " << (static_cast<double>(frame_duration) / 1000.0) << "\n";
 
         if ((frame_count_ % fps_) == 0 && frame_count_ > 0) {
-            sr_latency_ << "start " << frame_count_ << " " << millis << "";
+            sr_latency_ << "start " << frame_count_ << " " << millis << "\n";
             auto start = std::chrono::high_resolution_clock::now();
-// #if !defined ACTIVE_SCENE
-//             mainEngine->GetMesh(mesh, 2);
-// #else
+#if !defined ACTIVE_SCENE
+             mainEngine->GetMesh(mesh, 2);
+#else
             main_engine_->GetMesh(mesh_, 1);
-// #endif
+#endif
             //pyh This is for dumping out the mesh directly to file
-            std::string merge_name = this->scene_number_+ "_" + std::to_string(frame_count_) +".obj";
-            mesh_->WriteOBJ(merge_name.c_str());
+            // std::string merge_name = this->scene_number_+ "_" + std::to_string(frame_count_) +".obj";
+            // mesh_->WriteOBJ(merge_name.c_str());
 
             if (!cpu_triangles_ || cpu_triangles_->dataSize < mesh_->noTotalTriangles) {
                 cpu_triangles_.reset(
@@ -187,7 +187,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
             double duration_ms = static_cast<double>(duration) / 1000.0;
-            sr_latency_ << "extract " << scene_id << " " << duration_ms << " " << face_number << "";
+            sr_latency_ << "extract " << scene_id << " " << duration_ms << " " << face_number << "\n";
 
 
             auto VB_start = std::chrono::high_resolution_clock::now();
@@ -203,7 +203,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             auto VB_end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::microseconds>(VB_end - VB_start).count();
             duration_ms = static_cast<double>(duration) / 1000.0;
-            sr_latency_ << "vb " << scene_id << " " << duration_ms << " " << unique_VBs.size() << "";
+            sr_latency_ << "vb " << scene_id << " " << duration_ms << " " << unique_VBs.size() << "\n";
 
             auto roi_start = std::chrono::high_resolution_clock::now();
             bool set_active = false;
@@ -342,7 +342,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
 
             auto roi_end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::microseconds>(roi_end - roi_start).count();
-            sr_latency_ << "gen " << scene_id << " " << (static_cast<double>(duration) / 1000.0) << "";
+            sr_latency_ << "gen " << scene_id << " " << (static_cast<double>(duration) / 1000.0) << "\n";
 
             sr_latency_.flush();
             //pyh reset tracking
