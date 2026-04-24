@@ -104,4 +104,10 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseBoost.cmake)
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/UseOpenMP.cmake)
 target_link_libraries(${PLUGIN_NAME} PUBLIC ${Boost_LIBRARIES} ${OpenCV_LIBS} Eigen3::Eigen)
 
+#aniket: make sure we're using cuda
+find_package(CUDAToolkit REQUIRED)
+
+target_link_libraries(${PLUGIN_NAME} PRIVATE CUDA::cudart)
+
+
 install(TARGETS ${PLUGIN_NAME} DESTINATION lib)

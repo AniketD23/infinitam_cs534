@@ -21,6 +21,14 @@
 
 using namespace ILLIXR;
 
+// aniket: different thresholds evaluated
+enum Threshold {
+    FPS,
+    ALLOCS,
+    UPDATES,
+    AUP
+}
+
 class infinitam : public plugin {
 public:
     infinitam(const std::string& name_, phonebook *pb_);
@@ -40,6 +48,18 @@ private:
     switchboard::writer<data_format::vb_type> vb_list_;
 
     std::unique_ptr<ORUtils::MemoryBlock<ITMLib::ITMMesh::Triangle>> cpu_triangles_;
+
+    // aniket: decider for threshold signal
+    bool thresholdMet();
+
+    // aniket: new allocations/updates since last extraction
+    unsigned alloc_count_;
+    unsigned allocs_ = 50000;
+    unsigned update_count_;
+    unsigned updates_ = 50000;
+    unsigned aup_count_;
+    unsigned aup_ = 100000;
+    Threshold threshold_signal_ = Threshold::FPS;
 
     //InfiniTAM related variables
     ITMLib::ITMRGBDCalib *calib_;

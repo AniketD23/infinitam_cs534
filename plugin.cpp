@@ -104,16 +104,87 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
                                      thread_count_);
     }
 
+    // aniket: configure the threshold signal and value
     try {
-        uint temp = switchboard_->get_env_ulong("FPS");
-        if (temp != 0) {
-            fps_ = temp;
-        } else {
-            spdlog::get("illixr")->error("infinitam: FPS not set; using default {}", fps_);
+        std::string temp = switchboard_->get_env("THRESHOLD");
+        switch(temp) {
+            case "FPS":
+                threshold_signal_ = Threshold::FPS;
+                break;
+            case "ALLOCS":
+                threshold_signal_ = Threshold::ALLOCS;
+                break;
+            case "UPDATES":
+                threshold_signal_ = Threshold::UPDATES;
+                break;
+            case "AUP":
+                threshold_signal_ = Threshold::AUP;
+                break;
+            default:
+                spdlog::get("illixr")->error("infinitam: THRESHOLD invalid, using default {}", threshold_signal_);
         }
+
     } catch (...) {
-        spdlog::get("illixr")->error("infinitam: FPS invalid, using default {}", fps_);
+        spdlog::get("illixr")->error("infinitam: THRESHOLD signal not set; using default {}", threshold_signal_);
     }
+
+    switch(threshold_signal_) {
+        case Threshold::FPS:
+            try {
+                uint temp = switchboard_->get_env_ulong("FPS");
+                if (temp != 0) {
+                    fps_ = temp;
+                } else {
+                    spdlog::get("illixr")->error("infinitam: FPS not set; using default {}", fps_);
+                }
+            } catch (...) {
+                spdlog::get("illixr")->error("infinitam: FPS invalid, using default {}", fps_);
+            }
+            break;
+
+        case Threshold::ALLOCS:
+            try {
+                uint temp = switchboard_->get_env_ulong("ALLOCS_K");
+                if (temp != 0) {
+                    allocs_ = temp * 1000;
+                } else {
+                    spdlog::get("illixr")->error("infinitam: ALLOCS_K not set; using default {}", fps_);
+                }
+            } catch (...) {
+                spdlog::get("illixr")->error("infinitam: ALLOCS_K invalid, using default {}", fps_);
+            }
+            break;
+
+        case Threshold::UPDATES:
+            try {
+                uint temp = switchboard_->get_env_ulong("UPDATES_K");
+                if (temp != 0) {
+                    updates_ = temp * 1000;
+                } else {
+                    spdlog::get("illixr")->error("infinitam: UPDATES_K not set; using default {}", fps_);
+                }
+            } catch (...) {
+                spdlog::get("illixr")->error("infinitam: UPDATES_K invalid, using default {}", fps_);
+            }
+            break;
+
+        case Threshold::AUP:
+            try {
+                uint temp = switchboard_->get_env_ulong("AUP_K");
+                if (temp != 0) {
+                    updates_ = temp * 1000;
+                } else {
+                    spdlog::get("illixr")->error("infinitam: UPDATES_K not set; using default {}", fps_);
+                }
+            } catch (...) {
+                spdlog::get("illixr")->error("infinitam: UPDATES_K invalid, using default {}", fps_);
+            }
+            break;
+
+        default:
+            break;
+    }
+
 
     spdlog::get("illixr")->info("================================InfiniTAM: setup finished==========================");
 }
@@ -155,7 +226,9 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
         sr_latency_ << "fuse " << frame_count_ << " " << (static_cast<double>(frame_duration) / 1000.0) << "\n";
 
-        if ((frame_count_ % fps_) == 0 && frame_count_ > 0) {
+        allocs_ += main_engine_->GetNumNewBricks();
+
+        if (thresholdMet()) {
             sr_latency_ << "start " << frame_count_ << " " << millis << "\n";
             auto start = std::chrono::high_resolution_clock::now();
 #if !defined ACTIVE_SCENE
@@ -365,5 +438,38 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
     frame_count_++;
 }
 
+// aniket: returns true if the signal passes the threshold value
+bool infinitam::thresholdMet() {
+    switch(threshold_signal_) {
+        case Threshold::FPS:
+            return (frame_count_ % fps_) == 0 && frame_count_ > 0
+
+        case Threshold::ALLOCS:
+            if (alloc_count_ > allocs_) {
+                alloc_count_ = 0;
+                return true;
+            }
+            break;
+
+        case Threshold::UPDATES:
+            if (update_count_ > updates_) {
+                update_count_ = 0;
+                return true;
+            }
+            break;
+
+        case Threshold::AUP:
+            if (aup_count_ > aup_) {
+                aup_count_ = 0;
+                return true;
+            }
+            break;
+
+        default:
+            return true; 
+            break;
+    }
+    return false;
+}
 
 PLUGIN_MAIN(infinitam)
