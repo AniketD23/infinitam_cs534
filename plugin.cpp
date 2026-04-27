@@ -107,21 +107,16 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     // aniket: configure the threshold signal and value
     try {
         std::string temp = switchboard_->get_env("THRESHOLD");
-        switch(temp) {
-            case "FPS":
-                threshold_signal_ = Threshold::FPS;
-                break;
-            case "ALLOCS":
-                threshold_signal_ = Threshold::ALLOCS;
-                break;
-            case "UPDATES":
-                threshold_signal_ = Threshold::UPDATES;
-                break;
-            case "AUP":
-                threshold_signal_ = Threshold::AUP;
-                break;
-            default:
-                spdlog::get("illixr")->error("infinitam: THRESHOLD invalid, using default {}", threshold_signal_);
+        if (temp == "FPS") {
+            threshold_signal_ = Threshold::FPS;
+        } else if (temp == "ALLOCS") {
+            threshold_signal_ = Threshold::ALLOCS;
+        } else if (temp == "UPDATES") {
+            threshold_signal_ = Threshold::UPDATES;
+        } else if (temp == "AUP") {
+            threshold_signal_ = Threshold::AUP;
+        } else {
+            spdlog::get("illixr")->error("infinitam: THRESHOLD invalid, using default {}", threshold_signal_);
         }
 
     } catch (...) {
@@ -227,6 +222,11 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         sr_latency_ << "fuse " << frame_count_ << " " << (static_cast<double>(frame_duration) / 1000.0) << "\n";
 
         allocs_ += main_engine_->GetNumNewBricks();
+        sr_latency_ << "allocations " << frame_count_ << " " << allocs_ << "\n";
+        if (threshold_signal_ == Threshold::UPDATES) {
+            updates_ += main_engine_->GetNumNewFused();
+            sr_latency_ << "updates " << frame_count_ << " " << updates_ << "\n";
+        }
 
         if (thresholdMet()) {
             sr_latency_ << "start " << frame_count_ << " " << millis << "\n";
@@ -442,7 +442,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
 bool infinitam::thresholdMet() {
     switch(threshold_signal_) {
         case Threshold::FPS:
-            return (frame_count_ % fps_) == 0 && frame_count_ > 0
+            return (frame_count_ % fps_) == 0 && frame_count_ > 0;
 
         case Threshold::ALLOCS:
             if (alloc_count_ > allocs_) {

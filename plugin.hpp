@@ -27,7 +27,7 @@ enum Threshold {
     ALLOCS,
     UPDATES,
     AUP
-}
+};
 
 class infinitam : public plugin {
 public:
