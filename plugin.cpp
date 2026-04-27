@@ -109,12 +109,16 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         std::string temp = switchboard_->get_env("THRESHOLD");
         if (temp == "FPS") {
             threshold_signal_ = Threshold::FPS;
+            spdlog::get("illixr")->error("infinitam: THRESHOLD set to FPS");
         } else if (temp == "ALLOCS") {
             threshold_signal_ = Threshold::ALLOCS;
+            spdlog::get("illixr")->error("infinitam: THRESHOLD set to ALLOCS");
         } else if (temp == "UPDATES") {
             threshold_signal_ = Threshold::UPDATES;
+            spdlog::get("illixr")->error("infinitam: THRESHOLD set to UPDATES");
         } else if (temp == "AUP") {
             threshold_signal_ = Threshold::AUP;
+            spdlog::get("illixr")->error("infinitam: THRESHOLD set to AUP");
         } else {
             spdlog::get("illixr")->error("infinitam: THRESHOLD invalid, using default {}", threshold_signal_);
         }
@@ -129,6 +133,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
                 uint temp = switchboard_->get_env_ulong("FPS");
                 if (temp != 0) {
                     fps_ = temp;
+                    spdlog::get("illixr")->error("infinitam: fps_ set to {}", fps_);
                 } else {
                     spdlog::get("illixr")->error("infinitam: FPS not set; using default {}", fps_);
                 }
@@ -142,6 +147,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
                 uint temp = switchboard_->get_env_ulong("ALLOCS_K");
                 if (temp != 0) {
                     allocs_ = temp * 1000;
+                    spdlog::get("illixr")->error("infinitam: allocs_ set to {}", allocs_);
                 } else {
                     spdlog::get("illixr")->error("infinitam: ALLOCS_K not set; using default {}", fps_);
                 }
@@ -155,6 +161,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
                 uint temp = switchboard_->get_env_ulong("UPDATES_K");
                 if (temp != 0) {
                     updates_ = temp * 1000;
+                    spdlog::get("illixr")->error("infinitam: updates_ set to {}", updates_);
                 } else {
                     spdlog::get("illixr")->error("infinitam: UPDATES_K not set; using default {}", fps_);
                 }
@@ -167,12 +174,13 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
             try {
                 uint temp = switchboard_->get_env_ulong("AUP_K");
                 if (temp != 0) {
-                    updates_ = temp * 1000;
+                    aup_ = temp * 1000;
+                    spdlog::get("illixr")->error("infinitam: aup_ set to {}", aup_);
                 } else {
-                    spdlog::get("illixr")->error("infinitam: UPDATES_K not set; using default {}", fps_);
+                    spdlog::get("illixr")->error("infinitam: AUP_K not set; using default {}", fps_);
                 }
             } catch (...) {
-                spdlog::get("illixr")->error("infinitam: UPDATES_K invalid, using default {}", fps_);
+                spdlog::get("illixr")->error("infinitam: AUP_K invalid, using default {}", fps_);
             }
             break;
 
@@ -223,6 +231,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
 
         allocs_ += main_engine_->GetNumNewBricks();
         sr_latency_ << "allocations " << frame_count_ << " " << allocs_ << "\n";
+        // aniket: tracking up
         // if (threshold_signal_ == Threshold::UPDATES) {
         //     updates_ += main_engine_->GetNumNewFused();
         //     sr_latency_ << "updates " << frame_count_ << " " << updates_ << "\n";
