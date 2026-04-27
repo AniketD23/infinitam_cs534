@@ -146,8 +146,8 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
             try {
                 uint temp = switchboard_->get_env_ulong("ALLOCS_K");
                 if (temp != 0) {
-                    allocs_ = temp * 1000;
-                    spdlog::get("illixr")->error("infinitam: allocs_ set to {}", allocs_);
+                    allocs_threshold_ = temp * 1000;
+                    spdlog::get("illixr")->error("infinitam: allocs_threshold_ set to {}", allocs_threshold_);
                 } else {
                     spdlog::get("illixr")->error("infinitam: ALLOCS_K not set; using default {}", fps_);
                 }
@@ -229,8 +229,8 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
         sr_latency_ << "fuse " << frame_count_ << " " << (static_cast<double>(frame_duration) / 1000.0) << "\n";
 
-        allocs_ += main_engine_->GetNumNewBricks();
-        sr_latency_ << "allocations " << frame_count_ << " " << allocs_ << "\n";
+        alloc_count_ += main_engine_->GetNumNewBricks();
+        sr_latency_ << "allocations " << frame_count_ << " " << alloc_count_ << "\n";
         // aniket: tracking up
         // if (threshold_signal_ == Threshold::UPDATES) {
         //     updates_ += main_engine_->GetNumNewFused();
@@ -454,7 +454,7 @@ bool infinitam::thresholdMet() {
             return (frame_count_ % fps_) == 0 && frame_count_ > 0;
 
         case Threshold::ALLOCS:
-            if (alloc_count_ > allocs_) {
+            if (alloc_count_ > allocs_threshold_) {
                 alloc_count_ = 0;
                 return true;
             }
