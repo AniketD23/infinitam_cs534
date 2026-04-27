@@ -223,10 +223,10 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
 
         allocs_ += main_engine_->GetNumNewBricks();
         sr_latency_ << "allocations " << frame_count_ << " " << allocs_ << "\n";
-        if (threshold_signal_ == Threshold::UPDATES) {
-            updates_ += main_engine_->GetNumNewFused();
-            sr_latency_ << "updates " << frame_count_ << " " << updates_ << "\n";
-        }
+        // if (threshold_signal_ == Threshold::UPDATES) {
+        //     updates_ += main_engine_->GetNumNewFused();
+        //     sr_latency_ << "updates " << frame_count_ << " " << updates_ << "\n";
+        // }
 
         if (thresholdMet()) {
             sr_latency_ << "start " << frame_count_ << " " << millis << "\n";
