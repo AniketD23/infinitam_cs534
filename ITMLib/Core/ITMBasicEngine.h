@@ -79,9 +79,6 @@ namespace ITMLib
 
 		unsigned GetNumNewBricks(void) const;
 		unsigned GetFreqDivisor(void);
-		// aniket: for voxel blocks updated threshold 
-		unsigned GetNumVisibleBricks(void) const;
-		// unsigned GetNumNewFused(void) const;
 
 		/// Extracts a mesh from the current scene and saves it to the model file specified by the file name
 		void SaveSceneToMesh(const char *fileName);
@@ -128,6 +125,9 @@ namespace ITMLib
 		//pyh add getmesh function 0 inactive 1 active 2 full
 		void GetMesh(ITMMesh *out_mesh, int mesh_type);
 		void ResetActiveSceneTracking();
+		// aniket: for voxel blocks updated threshold 
+		unsigned GetNumVisibleBricks(void) const;
+		// unsigned GetNumNewFused(void) const;
 		
 		//pyh functions for InfiniTAM plugin
 		void SetInitialPose(ORUtils::Matrix4<float> init_transform);

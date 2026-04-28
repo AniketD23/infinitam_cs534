@@ -77,8 +77,6 @@ namespace ITMLib
 
 		/// Returns number of newly allocated bricks in the last frame
 		virtual unsigned GetNumNewBricks(void) const { return 0; }
-		// aniket: for voxel blocks updated threshold
-		// virtual unsigned GetNumVisibleBricks(void) const { return 0; }
 
 		/// Returns camera frequency divisor
 		virtual unsigned GetFreqDivisor(void) { return 1; }
@@ -92,6 +90,8 @@ namespace ITMLib
 		virtual void GetMesh(ITMMesh *out_mesh, int mesh_type){};
 		//pyh reset the tracking after exraction
 		virtual void ResetActiveSceneTracking(){};	
+		// aniket: for voxel blocks updated threshold
+		virtual unsigned GetNumVisibleBricks(void) const { return 0; };
 	
 		//pyh supporting functions for the plugin
 		virtual void SetInitialPose(ORUtils::Matrix4<float> init_transform) { };
