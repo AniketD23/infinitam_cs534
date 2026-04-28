@@ -232,7 +232,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         alloc_count_ += main_engine_->GetNumNewBricks();
         
         sr_latency_ << "allocations " << frame_count_ << " " << alloc_count_ << "\n";
-        sr_latency_ << "visible_bricks " << frame_count_ << " " << (ITMBasicEngine* main_engine_)->GetNumVisibleBricks() << "\n";
+        sr_latency_ << "visible_bricks " << frame_count_ << " " << main_engine_->GetNumVisibleBricks() << "\n";
         // aniket: tracking up
         // if (threshold_signal_ == Threshold::UPDATES) {
         //     updates_threshold_ += main_engine_->GetNumNewFused();
@@ -269,7 +269,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
             double duration_ms = static_cast<double>(duration) / 1000.0;
             sr_latency_ << "extract " << scene_id << " " << duration_ms << " " << face_number << "\n";
-            sr_latency_ << "updated_bricks " << scene_id << " " << mesh_->noVoxelBlocks() << "\n";
+            sr_latency_ << "updated_bricks " << scene_id << " " << mesh_->noVoxelBlocks << "\n";
 
 
             auto VB_start = std::chrono::high_resolution_clock::now();
