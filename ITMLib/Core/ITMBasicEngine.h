@@ -79,6 +79,9 @@ namespace ITMLib
 
 		unsigned GetNumNewBricks(void) const;
 		unsigned GetFreqDivisor(void);
+		// aniket: for voxel blocks updated threshold 
+		unsigned GetNumNewFused(void) const;
+		unsigned GetNumVisibleBricks(void) const;
 
 		/// Extracts a mesh from the current scene and saves it to the model file specified by the file name
 		void SaveSceneToMesh(const char *fileName);

@@ -109,16 +109,16 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         std::string temp = switchboard_->get_env("THRESHOLD");
         if (temp == "FPS") {
             threshold_signal_ = Threshold::FPS;
-            spdlog::get("illixr")->error("infinitam: THRESHOLD set to FPS");
+            spdlog::get("illixr")->info("infinitam: THRESHOLD set to FPS");
         } else if (temp == "ALLOCS") {
             threshold_signal_ = Threshold::ALLOCS;
-            spdlog::get("illixr")->error("infinitam: THRESHOLD set to ALLOCS");
+            spdlog::get("illixr")->info("infinitam: THRESHOLD set to ALLOCS");
         } else if (temp == "UPDATES") {
             threshold_signal_ = Threshold::UPDATES;
-            spdlog::get("illixr")->error("infinitam: THRESHOLD set to UPDATES");
+            spdlog::get("illixr")->info("infinitam: THRESHOLD set to UPDATES");
         } else if (temp == "AUP") {
             threshold_signal_ = Threshold::AUP;
-            spdlog::get("illixr")->error("infinitam: THRESHOLD set to AUP");
+            spdlog::get("illixr")->info("infinitam: THRESHOLD set to AUP");
         } else {
             spdlog::get("illixr")->error("infinitam: THRESHOLD invalid, using default {}", threshold_signal_);
         }
@@ -133,7 +133,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
                 uint temp = switchboard_->get_env_ulong("FPS");
                 if (temp != 0) {
                     fps_ = temp;
-                    spdlog::get("illixr")->error("infinitam: fps_ set to {}", fps_);
+                    spdlog::get("illixr")->info("infinitam: fps_ set to {}", fps_);
                 } else {
                     spdlog::get("illixr")->error("infinitam: FPS not set; using default {}", fps_);
                 }
@@ -147,7 +147,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
                 uint temp = switchboard_->get_env_ulong("ALLOCS");
                 if (temp != 0) {
                     allocs_threshold_ = temp;
-                    spdlog::get("illixr")->error("infinitam: allocs_threshold_ set to {}", allocs_threshold_);
+                    spdlog::get("illixr")->info("infinitam: allocs_threshold_ set to {}", allocs_threshold_);
                 } else {
                     spdlog::get("illixr")->error("infinitam: ALLOCS not set; using default {}", fps_);
                 }
@@ -161,7 +161,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
                 uint temp = switchboard_->get_env_ulong("UPDATES");
                 if (temp != 0) {
                     updates_threshold_ = temp;
-                    spdlog::get("illixr")->error("infinitam: updates_threshold_ set to {}", updates_threshold_);
+                    spdlog::get("illixr")->info("infinitam: updates_threshold_ set to {}", updates_threshold_);
                 } else {
                     spdlog::get("illixr")->error("infinitam: UPDATES not set; using default {}", fps_);
                 }
@@ -175,7 +175,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
                 uint temp = switchboard_->get_env_ulong("AUP");
                 if (temp != 0) {
                     aup_threshold_ = temp;
-                    spdlog::get("illixr")->error("infinitam: aup_threshold_ set to {}", aup_threshold_);
+                    spdlog::get("illixr")->info("infinitam: aup_threshold_ set to {}", aup_threshold_);
                 } else {
                     spdlog::get("illixr")->error("infinitam: AUP not set; using default {}", fps_);
                 }
@@ -230,7 +230,9 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         sr_latency_ << "fuse " << frame_count_ << " " << (static_cast<double>(frame_duration) / 1000.0) << "\n";
 
         alloc_count_ += main_engine_->GetNumNewBricks();
+        
         sr_latency_ << "allocations " << frame_count_ << " " << alloc_count_ << "\n";
+        sr_latency_ << "visible bricks " << frame_count_ << " " << main_engine_->GetNumVisibleBricks() << "\n";
         // aniket: tracking up
         // if (threshold_signal_ == Threshold::UPDATES) {
         //     updates_threshold_ += main_engine_->GetNumNewFused();
