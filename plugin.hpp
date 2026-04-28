@@ -54,11 +54,11 @@ private:
 
     // aniket: new allocations/updates since last extraction
     unsigned alloc_count_;
-    unsigned allocs_threshold_ = 50000;
+    unsigned allocs_threshold_ = 500;
     unsigned update_count_;
-    unsigned updates_threshold_ = 50000;
+    unsigned updates_threshold_ = 500;
     unsigned aup_count_;
-    unsigned aup_threshold_ = 100000;
+    unsigned aup_threshold_ = 1000;
     Threshold threshold_signal_ = Threshold::FPS;
 
     //InfiniTAM related variables

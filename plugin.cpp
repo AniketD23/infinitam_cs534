@@ -144,43 +144,43 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
 
         case Threshold::ALLOCS:
             try {
-                uint temp = switchboard_->get_env_ulong("ALLOCS_K");
+                uint temp = switchboard_->get_env_ulong("ALLOCS");
                 if (temp != 0) {
-                    allocs_threshold_ = temp * 1000;
+                    allocs_threshold_ = temp;
                     spdlog::get("illixr")->error("infinitam: allocs_threshold_ set to {}", allocs_threshold_);
                 } else {
-                    spdlog::get("illixr")->error("infinitam: ALLOCS_K not set; using default {}", fps_);
+                    spdlog::get("illixr")->error("infinitam: ALLOCS not set; using default {}", fps_);
                 }
             } catch (...) {
-                spdlog::get("illixr")->error("infinitam: ALLOCS_K invalid, using default {}", fps_);
+                spdlog::get("illixr")->error("infinitam: ALLOCS invalid, using default {}", fps_);
             }
             break;
 
         case Threshold::UPDATES:
             try {
-                uint temp = switchboard_->get_env_ulong("UPDATES_K");
+                uint temp = switchboard_->get_env_ulong("UPDATES");
                 if (temp != 0) {
-                    updates_ = temp * 1000;
-                    spdlog::get("illixr")->error("infinitam: updates_ set to {}", updates_);
+                    updates_threshold_ = temp;
+                    spdlog::get("illixr")->error("infinitam: updates_threshold_ set to {}", updates_threshold_);
                 } else {
-                    spdlog::get("illixr")->error("infinitam: UPDATES_K not set; using default {}", fps_);
+                    spdlog::get("illixr")->error("infinitam: UPDATES not set; using default {}", fps_);
                 }
             } catch (...) {
-                spdlog::get("illixr")->error("infinitam: UPDATES_K invalid, using default {}", fps_);
+                spdlog::get("illixr")->error("infinitam: UPDATES invalid, using default {}", fps_);
             }
             break;
 
         case Threshold::AUP:
             try {
-                uint temp = switchboard_->get_env_ulong("AUP_K");
+                uint temp = switchboard_->get_env_ulong("AUP");
                 if (temp != 0) {
-                    aup_ = temp * 1000;
-                    spdlog::get("illixr")->error("infinitam: aup_ set to {}", aup_);
+                    aup_threshold_ = temp;
+                    spdlog::get("illixr")->error("infinitam: aup_threshold_ set to {}", aup_threshold_);
                 } else {
-                    spdlog::get("illixr")->error("infinitam: AUP_K not set; using default {}", fps_);
+                    spdlog::get("illixr")->error("infinitam: AUP not set; using default {}", fps_);
                 }
             } catch (...) {
-                spdlog::get("illixr")->error("infinitam: AUP_K invalid, using default {}", fps_);
+                spdlog::get("illixr")->error("infinitam: AUP invalid, using default {}", fps_);
             }
             break;
 
@@ -233,8 +233,8 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         sr_latency_ << "allocations " << frame_count_ << " " << alloc_count_ << "\n";
         // aniket: tracking up
         // if (threshold_signal_ == Threshold::UPDATES) {
-        //     updates_ += main_engine_->GetNumNewFused();
-        //     sr_latency_ << "updates " << frame_count_ << " " << updates_ << "\n";
+        //     updates_threshold_ += main_engine_->GetNumNewFused();
+        //     sr_latency_ << "updates " << frame_count_ << " " << updates_threshold_ << "\n";
         // }
 
         if (thresholdMet()) {
@@ -449,9 +449,10 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
 
 // aniket: returns true if the signal passes the threshold value
 bool infinitam::thresholdMet() {
+    if (frame_count_ <= 0) { return false; }
     switch(threshold_signal_) {
         case Threshold::FPS:
-            return (frame_count_ % fps_) == 0 && frame_count_ > 0;
+            return (frame_count_ % fps_) == 0;
 
         case Threshold::ALLOCS:
             if (alloc_count_ > allocs_threshold_) {
@@ -461,14 +462,14 @@ bool infinitam::thresholdMet() {
             break;
 
         case Threshold::UPDATES:
-            if (update_count_ > updates_) {
+            if (update_count_ > updates_threshold_) {
                 update_count_ = 0;
                 return true;
             }
             break;
 
         case Threshold::AUP:
-            if (aup_count_ > aup_) {
+            if (aup_count_ > aup_threshold_) {
                 aup_count_ = 0;
                 return true;
             }
