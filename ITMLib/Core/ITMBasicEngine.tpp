@@ -882,25 +882,25 @@ unsigned ITMBasicEngine<TVoxel, TIndex>::GetNumVisibleBricks(void) const
 	}
 }
 
-// aniket: for voxel blocks updated threshold
-template <typename TVoxel, typename TIndex>
-unsigned ITMBasicEngine<TVoxel, TIndex>::GetNumNewFused(void) const
-{
-	const unsigned newBricksSize = newBricks.size();
+// // aniket: for voxel blocks updated threshold
+// template <typename TVoxel, typename TIndex>
+// unsigned ITMBasicEngine<TVoxel, TIndex>::GetNumNewFused(void) const
+// {
+// 	const unsigned newBricksSize = newBricks.size();
 
-	if (newBricksSize == 0)
-	{
-		return 0;
-	}
-	else if (newBricksSize == 1)
-	{
-		return newBricks[0];
-	}
-	else
-	{
-		return (newBricks[newBricksSize - 1] - newBricks[newBricksSize - 2]);
-	}
-}
+// 	if (newBricksSize == 0)
+// 	{
+// 		return 0;
+// 	}
+// 	else if (newBricksSize == 1)
+// 	{
+// 		return newBricks[0];
+// 	}
+// 	else
+// 	{
+// 		return (newBricks[newBricksSize - 1] - newBricks[newBricksSize - 2]);
+// 	}
+// }
 
 
 template <typename TVoxel, typename TIndex>

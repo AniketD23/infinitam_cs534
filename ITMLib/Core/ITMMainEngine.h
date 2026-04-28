@@ -77,6 +77,7 @@ namespace ITMLib
 
 		/// Returns number of newly allocated bricks in the last frame
 		virtual unsigned GetNumNewBricks(void) const { return 0; }
+		virtual unsigned GetNumVisibleBricks(void) const { return 0; }
 
 		/// Returns camera frequency divisor
 		virtual unsigned GetFreqDivisor(void) { return 1; }
