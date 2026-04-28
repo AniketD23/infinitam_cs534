@@ -53,11 +53,11 @@ private:
     bool thresholdMet();
 
     // aniket: new allocations/updates since last extraction
-    unsigned alloc_count_;
+    unsigned alloc_count_ = 0;
     unsigned allocs_threshold_ = 500;
-    unsigned update_count_;
+    unsigned update_count_ = 0;
     unsigned updates_threshold_ = 500;
-    unsigned aup_count_;
+    unsigned aup_count_ = 0;
     unsigned aup_threshold_ = 1000;
     Threshold threshold_signal_ = Threshold::FPS;
 

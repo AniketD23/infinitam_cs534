@@ -230,14 +230,10 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         sr_latency_ << "fuse " << frame_count_ << " " << (static_cast<double>(frame_duration) / 1000.0) << "\n";
 
         alloc_count_ += main_engine_->GetNumNewBricks();
+        update_count_ += main_engine_->GetNumVisibleBricks();
         
         sr_latency_ << "allocations " << frame_count_ << " " << alloc_count_ << "\n";
-        sr_latency_ << "visible_bricks " << frame_count_ << " " << main_engine_->GetNumVisibleBricks() << "\n";
-        // aniket: tracking up
-        // if (threshold_signal_ == Threshold::UPDATES) {
-        //     updates_threshold_ += main_engine_->GetNumNewFused();
-        //     sr_latency_ << "updates " << frame_count_ << " " << updates_threshold_ << "\n";
-        // }
+        sr_latency_ << "update_count_ " << frame_count_ << " " << update_count_ << "\n";
 
         if (thresholdMet()) {
             sr_latency_ << "start " << frame_count_ << " " << millis << "\n";
