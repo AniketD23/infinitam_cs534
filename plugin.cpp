@@ -266,8 +266,8 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
             double duration_ms = static_cast<double>(duration) / 1000.0;
-            sr_latency_ << "extract " << scene_id << " " << duration_ms << " " << face_number << "\n";
-            sr_latency_ << "updated_bricks " << scene_id << " " << mesh_->noVoxelBlocks << "\n";
+            sr_latency_ << "extract " << scene_id_ << " " << duration_ms << " " << face_number << "\n";
+            sr_latency_ << "updated_bricks " << scene_id_ << " " << mesh_->noVoxelBlocks << "\n";
 
 
             auto VB_start = std::chrono::high_resolution_clock::now();
@@ -278,12 +278,12 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
                                         (mesh_->updated_voxel_blocks[i][2]));
             }
             //pyh sending UVBL first
-            vb_list_.put(vb_list_.allocate<vb_type>(vb_type{std::move(unique_VBs), scene_id}));
+            vb_list_.put(vb_list_.allocate<vb_type>(vb_type{std::move(unique_VBs), scene_id_}));
 
             auto VB_end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::microseconds>(VB_end - VB_start).count();
             duration_ms = static_cast<double>(duration) / 1000.0;
-            sr_latency_ << "vb " << scene_id << " " << duration_ms << " " << unique_VBs.size() << "\n";
+            sr_latency_ << "vb " << scene_id_ << " " << duration_ms << " " << unique_VBs.size() << "\n";
 
             auto roi_start = std::chrono::high_resolution_clock::now();
             bool set_active = false;
@@ -415,14 +415,14 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
                 }
 
                 mesh_writer_.put(mesh_writer_.allocate<mesh_type>(
-                        mesh_type{static_cast<uint>(omp_get_thread_num()), std::move(ply_reader), scene_id, 0,
+                        mesh_type{static_cast<uint>(omp_get_thread_num()), std::move(ply_reader), scene_id_, 0,
                                   numThreads, per_faces, per_vertices, set_active}));
 
             }
 
             auto roi_end = std::chrono::high_resolution_clock::now();
             duration = std::chrono::duration_cast<std::chrono::microseconds>(roi_end - roi_start).count();
-            sr_latency_ << "gen " << scene_id << " " << (static_cast<double>(duration) / 1000.0) << "\n";
+            sr_latency_ << "gen " << scene_id_ << " " << (static_cast<double>(duration) / 1000.0) << "\n";
 
             sr_latency_.flush();
             //pyh reset tracking
