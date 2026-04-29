@@ -257,8 +257,6 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         auto frame_end = std::chrono::high_resolution_clock::now();
         auto frame_duration = std::chrono::duration_cast<std::chrono::microseconds>(frame_end - frame_start).count();
 
-        auto sinceEpoch = frame_start.time_since_epoch();
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
         sr_latency_ << "fuse " << frame_count_ << " " << (static_cast<double>(frame_duration) / 1000.0) << "\n";
 
         alloc_count_ += main_engine_->GetNumNewBricks();
@@ -283,6 +281,9 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             pose_udelta_count_ += dist;
             sr_latency_ << "pose_udelta_count_ " << frame_count_ << " " << pose_udelta_count_ << "\n";
         // }
+
+        auto sinceEpoch = frame_start.time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch).count();
 
         if (thresholdMet()) {
             sr_latency_ << "start " << frame_count_ << " " << millis << "\n";
@@ -491,10 +492,10 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
     }
     if (datum->last_frame) {
         spdlog::get("illixr")->info("reached last frame at {}", frame_count_);
-
-        auto epoch_timestamp = frame_start.time_since_epoch();
-        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(epoch_timestamp).count();
-        sr_latency_ << "end_seconds" << (static_cast<double>(frame_duration) / 1000.0) << "\n";
+        auto frame_end = std::chrono::high_resolution_clock::now();
+        auto sinceEpoch_end = frame_end.time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(sinceEpoch_end).count();
+        sr_latency_ << "end_seconds" << (static_cast<double>(millis) / 1000.0) << "\n";
 
         sr_latency_.flush();
     }
