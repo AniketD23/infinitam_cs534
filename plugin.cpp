@@ -122,9 +122,9 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         } else if (temp == "POSE_UDELTA") {
             threshold_signal_ = Threshold::POSE_UDELTA;
             spdlog::get("illixr")->info("infinitam: THRESHOLD set to POSE_UDELTA");
-        } else if (temp == "POSE_SDELTA") {
-            threshold_signal_ = Threshold::POSE_SDELTA;
-            spdlog::get("illixr")->info("infinitam: THRESHOLD set to POSE_SDELTA");
+        // } else if (temp == "POSE_SDELTA") {
+        //     threshold_signal_ = Threshold::POSE_SDELTA;
+        //     spdlog::get("illixr")->info("infinitam: THRESHOLD set to POSE_SDELTA");
         } else {
             spdlog::get("illixr")->error("infinitam: THRESHOLD invalid, using default {}", threshold_signal_);
         }
@@ -190,6 +190,20 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
             }
             break;
 
+        case Threshold::POSE_UDELTA:
+            try {
+                uint temp = switchboard_->get_env_ulong("POSE_UDELTA");
+                if (temp != 0) {
+                    pose_udelta_threshold_ = temp;
+                    spdlog::get("illixr")->info("infinitam: pose_udelta_threshold_ set to {}", pose_udelta_threshold_);
+                } else {
+                    spdlog::get("illixr")->error("infinitam: POSE_UDELTA not set; using default {}", fps_);
+                }
+            } catch (...) {
+                spdlog::get("illixr")->error("infinitam: POSE_UDELTA invalid, using default {}", fps_);
+            }
+            break;
+
         default:
             break;
     }
@@ -212,9 +226,13 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         };
 
         // Set first pose
+        ORUtils::SE3Pose old_pose;
         if (frame_count_ == 0) {
             main_engine_->SetInitialPose(cur_trans_matrix);
-        }
+        } 
+        // else if (threshold_signal_ == Threshold::POSE_UDELTA) {
+            old_pose = ORUtils::SE3Pose(*(main_engine_->GetTrackingState()->pose_d));
+        // }
 
         cv::Mat cur_depth = datum->depth.clone();
 
@@ -246,7 +264,17 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         } else if (threshold_signal_ == Threshold::VIS_SDELTA) {
             vis_sdelta_count_ += main_engine_->GetSignedDeltaVisibleBricks();
             sr_latency_ << "vis_sdelta_count_ " << frame_count_ << " " << vis_sdelta_count_ << "\n";
-        }
+        } 
+        // else if (threshold_signal_ == Threshold::POSE_UDELTA) {
+            ORUtils::SE3Pose curr_pose(*(main_engine_->GetTrackingState()->pose_d));
+            Vector3<float> curr_pose_T = curr_pose.GetT();
+            sr_latency_ << "curr_pose_T " << frame_count_ << " " << curr_pose_T << "\n";
+            Vector3<float> pose_diff_vec = curr_pose_T - old_pose.GetT();
+            pose_diff_vec *= pose_diff_vec;
+            float dist = std::sqrt(pose_diff_vec[0] + pose_diff_vec[1] + pose_diff_vec[2]);
+            pose_udelta_count_ += dist;
+            sr_latency_ << "pose_udelta_count_ " << frame_count_ << " " << pose_udelta_count_ << "\n";
+        // }
 
         if (thresholdMet()) {
             sr_latency_ << "start " << frame_count_ << " " << millis << "\n";
@@ -257,8 +285,8 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             main_engine_->GetMesh(mesh_, 1);
 #endif
             //pyh This is for dumping out the mesh directly to file
-            // std::string merge_name = this->scene_number_+ "_" + std::to_string(frame_count_) +".obj";
             // mesh_->WriteOBJ(merge_name.c_str());
+            // std::string merge_name = this->scene_number_+ "_" + std::to_string(frame_count_) +".obj";
 
             if (!cpu_triangles_ || cpu_triangles_->dataSize < mesh_->noTotalTriangles) {
                 cpu_triangles_.reset(
@@ -483,9 +511,18 @@ bool infinitam::thresholdMet() {
             break;
 
         case Threshold::VIS_SDELTA:
-            unsigned abs_delta = std::abs(vis_sdelta_count_);
-            if (abs_delta > vis_sdelta_threshold_) {
-                vis_sdelta_count_ = 0;
+            {
+                unsigned abs_delta = std::abs(vis_sdelta_count_);
+                if (abs_delta > vis_sdelta_threshold_) {
+                    vis_sdelta_count_ = 0;
+                    return true;
+                }
+            }
+            break;
+
+        case Threshold::POSE_UDELTA:
+            if (pose_udelta_count_ > pose_udelta_threshold_) {
+                pose_udelta_count_ = 0;
                 return true;
             }
             break;
