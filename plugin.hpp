@@ -67,12 +67,12 @@ private:
     // aniket: difference in visible bricks since last extraction
     unsigned vis_udelta_count_ = 0;
     unsigned vis_udelta_threshold_ = 10;
-    unsigned vis_sdelta_count_ = 0;
+    signed long vis_sdelta_count_ = 0;
     unsigned vis_sdelta_threshold_ = 10;
     // aniket: difference in pose since last extraction
     unsigned pose_udelta_count_ = 0;
     unsigned pose_udelta_threshold_ = 10;
-    unsigned pose_sdelta_count_ = 0;
+    signed long pose_sdelta_count_ = 0;
     unsigned pose_sdelta_threshold_ = 10;
 
     Threshold threshold_signal_ = Threshold::FPS;

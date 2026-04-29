@@ -243,6 +243,9 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         if (threshold_signal_ == Threshold::VIS_UDELTA) {
             vis_udelta_count_ += main_engine_->GetUnsignedDeltaVisibleBricks();
             sr_latency_ << "vis_udelta_count_ " << frame_count_ << " " << vis_udelta_count_ << "\n";
+        } else if (threshold_signal_ == Threshold::VIS_SDELTA) {
+            vis_sdelta_count_ += main_engine_->GetSignedDeltaVisibleBricks();
+            sr_latency_ << "vis_sdelta_count_ " << frame_count_ << " " << vis_sdelta_count_ << "\n";
         }
 
         if (thresholdMet()) {
@@ -480,7 +483,8 @@ bool infinitam::thresholdMet() {
             break;
 
         case Threshold::VIS_SDELTA:
-            if (vis_sdelta_count_ > vis_sdelta_threshold_) {
+            unsigned abs_delta = std::abs(vis_sdelta_count_);
+            if (abs_delta > vis_sdelta_threshold_) {
                 vis_sdelta_count_ = 0;
                 return true;
             }
