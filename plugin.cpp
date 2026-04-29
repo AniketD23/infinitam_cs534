@@ -248,7 +248,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         if (frame_count_ == 0) {
             auto epoch_timestamp = frame_start.time_since_epoch();
             auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(epoch_timestamp).count();
-            sr_latency_ << "begin_seconds" << (static_cast<double>(frame_duration) / 1000.0) << "\n";
+            sr_latency_ << "begin_seconds" << (static_cast<double>(millis) / 1000.0) << "\n";
         }
 
         //pyh main reconstruction (volumetric fusion) function
