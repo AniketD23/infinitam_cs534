@@ -127,6 +127,8 @@ namespace ITMLib
 		void ResetActiveSceneTracking();
 		// aniket: for voxel blocks updated threshold 
 		unsigned GetNumVisibleBricks(void) const;
+		signed long GetSignedDeltaVisibleBricks(void) const;
+		unsigned GetUnsignedDeltaVisibleBricks(void) const;
 		// unsigned GetNumNewFused(void) const;
 		
 		//pyh functions for InfiniTAM plugin

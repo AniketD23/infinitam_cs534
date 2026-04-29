@@ -113,12 +113,18 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
         } else if (temp == "ALLOCS") {
             threshold_signal_ = Threshold::ALLOCS;
             spdlog::get("illixr")->info("infinitam: THRESHOLD set to ALLOCS");
-        } else if (temp == "UPDATES") {
-            threshold_signal_ = Threshold::UPDATES;
-            spdlog::get("illixr")->info("infinitam: THRESHOLD set to UPDATES");
-        } else if (temp == "AUP") {
-            threshold_signal_ = Threshold::AUP;
-            spdlog::get("illixr")->info("infinitam: THRESHOLD set to AUP");
+        } else if (temp == "VIS_UDELTA") {
+            threshold_signal_ = Threshold::VIS_UDELTA;
+            spdlog::get("illixr")->info("infinitam: THRESHOLD set to VIS_UDELTA");
+        } else if (temp == "VIS_SDELTA") {
+            threshold_signal_ = Threshold::VIS_SDELTA;
+            spdlog::get("illixr")->info("infinitam: THRESHOLD set to VIS_SDELTA");
+        } else if (temp == "POSE_UDELTA") {
+            threshold_signal_ = Threshold::POSE_UDELTA;
+            spdlog::get("illixr")->info("infinitam: THRESHOLD set to POSE_UDELTA");
+        } else if (temp == "POSE_SDELTA") {
+            threshold_signal_ = Threshold::POSE_SDELTA;
+            spdlog::get("illixr")->info("infinitam: THRESHOLD set to POSE_SDELTA");
         } else {
             spdlog::get("illixr")->error("infinitam: THRESHOLD invalid, using default {}", threshold_signal_);
         }
@@ -156,31 +162,31 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
             }
             break;
 
-        case Threshold::UPDATES:
+        case Threshold::VIS_UDELTA:
             try {
-                uint temp = switchboard_->get_env_ulong("UPDATES");
+                uint temp = switchboard_->get_env_ulong("VIS_UDELTA");
                 if (temp != 0) {
-                    updates_threshold_ = temp;
-                    spdlog::get("illixr")->info("infinitam: updates_threshold_ set to {}", updates_threshold_);
+                    vis_udelta_threshold_ = temp;
+                    spdlog::get("illixr")->info("infinitam: vis_udelta_threshold_ set to {}", vis_udelta_threshold_);
                 } else {
-                    spdlog::get("illixr")->error("infinitam: UPDATES not set; using default {}", fps_);
+                    spdlog::get("illixr")->error("infinitam: VIS_UDELTA not set; using default {}", fps_);
                 }
             } catch (...) {
-                spdlog::get("illixr")->error("infinitam: UPDATES invalid, using default {}", fps_);
+                spdlog::get("illixr")->error("infinitam: VIS_UDELTA invalid, using default {}", fps_);
             }
             break;
 
-        case Threshold::AUP:
+        case Threshold::VIS_SDELTA:
             try {
-                uint temp = switchboard_->get_env_ulong("AUP");
+                uint temp = switchboard_->get_env_ulong("VIS_SDELTA");
                 if (temp != 0) {
-                    aup_threshold_ = temp;
-                    spdlog::get("illixr")->info("infinitam: aup_threshold_ set to {}", aup_threshold_);
+                    vis_sdelta_threshold_ = temp;
+                    spdlog::get("illixr")->info("infinitam: vis_sdelta_threshold_ set to {}", vis_sdelta_threshold_);
                 } else {
-                    spdlog::get("illixr")->error("infinitam: AUP not set; using default {}", fps_);
+                    spdlog::get("illixr")->error("infinitam: VIS_SDELTA not set; using default {}", fps_);
                 }
             } catch (...) {
-                spdlog::get("illixr")->error("infinitam: AUP invalid, using default {}", fps_);
+                spdlog::get("illixr")->error("infinitam: VIS_SDELTA invalid, using default {}", fps_);
             }
             break;
 
@@ -230,10 +236,14 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         sr_latency_ << "fuse " << frame_count_ << " " << (static_cast<double>(frame_duration) / 1000.0) << "\n";
 
         alloc_count_ += main_engine_->GetNumNewBricks();
-        update_count_ += main_engine_->GetNumVisibleBricks();
         
         sr_latency_ << "allocations " << frame_count_ << " " << alloc_count_ << "\n";
-        sr_latency_ << "update_count_ " << frame_count_ << " " << update_count_ << "\n";
+        sr_latency_ << "visible_bricks " << frame_count_ << " " << main_engine_->GetNumVisibleBricks() << "\n";
+
+        if (threshold_signal_ == Threshold::VIS_UDELTA) {
+            vis_udelta_count_ += main_engine_->GetUnsignedDeltaVisibleBricks();
+            sr_latency_ << "vis_udelta_count_ " << frame_count_ << " " << vis_udelta_count_ << "\n";
+        }
 
         if (thresholdMet()) {
             sr_latency_ << "start " << frame_count_ << " " << millis << "\n";
@@ -462,16 +472,16 @@ bool infinitam::thresholdMet() {
             }
             break;
 
-        case Threshold::UPDATES:
-            if (update_count_ > updates_threshold_) {
-                update_count_ = 0;
+        case Threshold::VIS_UDELTA:
+            if (vis_udelta_count_ > vis_udelta_threshold_) {
+                vis_udelta_count_ = 0;
                 return true;
             }
             break;
 
-        case Threshold::AUP:
-            if (aup_count_ > aup_threshold_) {
-                aup_count_ = 0;
+        case Threshold::VIS_SDELTA:
+            if (vis_sdelta_count_ > vis_sdelta_threshold_) {
+                vis_sdelta_count_ = 0;
                 return true;
             }
             break;

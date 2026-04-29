@@ -25,8 +25,12 @@ using namespace ILLIXR;
 enum Threshold {
     FPS,
     ALLOCS,
-    UPDATES,
-    AUP
+    // UPDATES,
+    // AUP,
+    VIS_UDELTA,
+    VIS_SDELTA,
+    POSE_UDELTA,
+    POSE_SDELTA
 };
 
 class infinitam : public plugin {
@@ -52,14 +56,25 @@ private:
     // aniket: decider for threshold signal
     bool thresholdMet();
 
-    // aniket: new allocations/updates since last extraction
+    // aniket: new allocations since last extraction
     unsigned scene_id_ = 0;
     unsigned alloc_count_ = 0;
-    unsigned allocs_threshold_ = 500;
-    unsigned update_count_ = 0;
-    unsigned updates_threshold_ = 500;
-    unsigned aup_count_ = 0;
-    unsigned aup_threshold_ = 1000;
+    unsigned allocs_threshold_ = 10;
+    // unsigned update_count_ = 0;
+    // unsigned updates_threshold_ = 10;
+    // unsigned aup_count_ = 0;
+    // unsigned aup_threshold_ = 1000;
+    // aniket: difference in visible bricks since last extraction
+    unsigned vis_udelta_count_ = 0;
+    unsigned vis_udelta_threshold_ = 10;
+    unsigned vis_sdelta_count_ = 0;
+    unsigned vis_sdelta_threshold_ = 10;
+    // aniket: difference in pose since last extraction
+    unsigned pose_udelta_count_ = 0;
+    unsigned pose_udelta_threshold_ = 10;
+    unsigned pose_sdelta_count_ = 0;
+    unsigned pose_sdelta_threshold_ = 10;
+
     Threshold threshold_signal_ = Threshold::FPS;
 
     //InfiniTAM related variables

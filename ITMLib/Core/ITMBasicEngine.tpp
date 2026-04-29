@@ -878,25 +878,43 @@ unsigned ITMBasicEngine<TVoxel, TIndex>::GetNumVisibleBricks(void) const
 	}
 }
 
-// // aniket: for voxel blocks updated threshold
-// template <typename TVoxel, typename TIndex>
-// unsigned ITMBasicEngine<TVoxel, TIndex>::GetNumNewFused(void) const
-// {
-// 	const unsigned newBricksSize = newBricks.size();
+// aniket: for visible blocks delta threshold
+template <typename TVoxel, typename TIndex>
+signed long ITMBasicEngine<TVoxel, TIndex>::GetSignedDeltaVisibleBricks(void) const
+{
+	const unsigned visibleBricksSize = visibleBricks.size();
 
-// 	if (newBricksSize == 0)
-// 	{
-// 		return 0;
-// 	}
-// 	else if (newBricksSize == 1)
-// 	{
-// 		return newBricks[0];
-// 	}
-// 	else
-// 	{
-// 		return (newBricks[newBricksSize - 1] - newBricks[newBricksSize - 2]);
-// 	}
-// }
+	if (visibleBricksSize < 2)
+	{
+		return 0;
+	}
+	else
+	{
+		return (((signed long) visibleBricks[visibleBricksSize - 1]) - ((signed long) visibleBricks[visibleBricksSize - 2]));
+	}
+}
+
+// aniket: for visible blocks delta threshold
+template <typename TVoxel, typename TIndex>
+unsigned ITMBasicEngine<TVoxel, TIndex>::GetUnsignedDeltaVisibleBricks(void) const
+{
+	const unsigned visibleBricksSize = visibleBricks.size();
+
+	if (visibleBricksSize < 2)
+	{
+		return 0;
+	}
+	else
+	{
+		unsigned vis_now = visibleBricks[visibleBricksSize - 1];
+		unsigned vis_past = visibleBricks[visibleBricksSize - 2];
+		if (vis_now > vis_past) {
+			return vis_now - vis_past;
+		} else {
+			return vis_past - vis_now;
+		}
+	}
+}
 
 
 template <typename TVoxel, typename TIndex>

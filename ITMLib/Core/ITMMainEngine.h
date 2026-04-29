@@ -92,6 +92,8 @@ namespace ITMLib
 		virtual void ResetActiveSceneTracking(){};	
 		// aniket: for voxel blocks updated threshold
 		virtual unsigned GetNumVisibleBricks(void) const { return 0; };
+		virtual signed long GetSignedDeltaVisibleBricks(void) const { return 0; };
+		virtual unsigned GetUnsignedDeltaVisibleBricks(void) const { return 0; };
 	
 		//pyh supporting functions for the plugin
 		virtual void SetInitialPose(ORUtils::Matrix4<float> init_transform) { };
