@@ -272,8 +272,8 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             sr_latency_ << "curr_pose_T " << frame_count_ << " " << curr_pose_T << "\n";
             ORUtils::Vector3<float> pose_diff_vec = curr_pose_T - old_pose.GetT();
             pose_diff_vec *= pose_diff_vec;
-            float dist = std::sqrt(pose_diff_vec[0] + pose_diff_vec[1] + pose_diff_vec[2]);
-            pose_udelta_count_ += dist;
+            float sum_sq = pose_diff_vec[0] + pose_diff_vec[1] + pose_diff_vec[2];
+            pose_udelta_count_ += sum_sq;
             sr_latency_ << "pose_udelta_count_ " << frame_count_ << " " << pose_udelta_count_ << "\n";
         // }
 
