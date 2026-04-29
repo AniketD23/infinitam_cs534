@@ -232,7 +232,7 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         } 
         // else if (threshold_signal_ == Threshold::POSE_UDELTA) {
             old_pose = ORUtils::SE3Pose(*(main_engine_->GetTrackingState()->pose_d));
-            
+
         // }
 
         cv::Mat cur_depth = datum->depth.clone();
@@ -268,9 +268,9 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         } 
         // else if (threshold_signal_ == Threshold::POSE_UDELTA) {
             ORUtils::SE3Pose curr_pose(*(main_engine_->GetTrackingState()->pose_d));
-            Vector3<float> curr_pose_T = curr_pose.GetT();
+            ORUtils::Vector3<float> curr_pose_T = curr_pose.GetT();
             sr_latency_ << "curr_pose_T " << frame_count_ << " " << curr_pose_T << "\n";
-            Vector3<float> pose_diff_vec = curr_pose_T - old_pose.GetT();
+            ORUtils::Vector3<float> pose_diff_vec = curr_pose_T - old_pose.GetT();
             pose_diff_vec *= pose_diff_vec;
             float dist = std::sqrt(pose_diff_vec[0] + pose_diff_vec[1] + pose_diff_vec[2]);
             pose_udelta_count_ += dist;
