@@ -872,13 +872,9 @@ unsigned ITMBasicEngine<TVoxel, TIndex>::GetNumVisibleBricks(void) const
 	{
 		return 0;
 	}
-	else if (visibleBricksSize == 1)
+	else 
 	{
-		return visibleBricks[0];
-	}
-	else
-	{
-		return (visibleBricks[visibleBricksSize - 1] - visibleBricks[visibleBricksSize - 2]);
+		return visibleBricks[visibleBricksSize - 1];
 	}
 }
 

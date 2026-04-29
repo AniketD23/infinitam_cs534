@@ -259,7 +259,9 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
             ITMLib::ITMMesh::Triangle *triangleArray = cpu_triangles_->GetData(MEMORYDEVICE_CPU);
 
             unsigned face_number = mesh_->noTotalTriangles;
-            unsigned scene_id = (frame_count_ / fps_) - 1;
+            // unsigned scene_id = (frame_count_ / fps_) - 1;
+            // aniket: original scene id tied to fps threshold
+            scene_id_++;
 
             auto end = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
