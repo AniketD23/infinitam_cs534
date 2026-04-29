@@ -131,6 +131,7 @@ namespace ITMLib
 		unsigned GetUnsignedDeltaVisibleBricks(void) const;
 		// unsigned GetNumNewFused(void) const;
 		
+		
 		//pyh functions for InfiniTAM plugin
 		void SetInitialPose(ORUtils::Matrix4<float> init_transform);
 		ITMTrackingState::TrackingResult ProcessFrame(ITMUChar4Image *rgbImage, ITMShortImage *rawDepthImage, ORUtils::Matrix4<float> cur_transform, ITMIMUMeasurement *imuMeasurement = NULL);
