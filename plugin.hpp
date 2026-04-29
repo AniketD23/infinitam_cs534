@@ -71,7 +71,7 @@ private:
     unsigned vis_sdelta_threshold_ = 10;
     // aniket: difference in pose since last extraction
     float pose_udelta_count_ = 0;
-    unsigned pose_udelta_threshold_ = 10;
+    float pose_udelta_threshold_ = 10;
     // float pose_sdelta_count_ = 0;
     // unsigned pose_sdelta_threshold_ = 10;
 
