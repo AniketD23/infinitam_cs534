@@ -91,6 +91,7 @@ infinitam::infinitam(const std::string& name_, phonebook *pb_)
     }
     sr_latency_.open(data_path_ + "/sr_latency.csv");
 
+
     try {
         uint temp = switchboard_->get_env_ulong("MESH_COMPRESS_PARALLELISM", 8);
         if (temp != 0) {
@@ -243,6 +244,12 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
         std::memcpy(cur_depth_head, depth_frame, sizeof(short) * input_raw_depth_image_->dataSize);
 
         auto frame_start = std::chrono::high_resolution_clock::now();
+
+        if (frame_count_ == 0) {
+            auto epoch_timestamp = frame_start.time_since_epoch();
+            auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(epoch_timestamp).count();
+            sr_latency_ << "begin_seconds" << (static_cast<double>(frame_duration) / 1000.0) << "\n";
+        }
 
         //pyh main reconstruction (volumetric fusion) function
         main_engine_->ProcessFrame(input_RGB_image_, input_raw_depth_image_, cur_trans_matrix);
@@ -484,6 +491,11 @@ void infinitam::process_frame(switchboard::ptr<const scene_recon_type>& datum) {
     }
     if (datum->last_frame) {
         spdlog::get("illixr")->info("reached last frame at {}", frame_count_);
+
+        auto epoch_timestamp = frame_start.time_since_epoch();
+        auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(epoch_timestamp).count();
+        sr_latency_ << "end_seconds" << (static_cast<double>(frame_duration) / 1000.0) << "\n";
+
         sr_latency_.flush();
     }
 
